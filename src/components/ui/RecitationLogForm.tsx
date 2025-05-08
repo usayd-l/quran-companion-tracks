@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { RecitationType, MistakePortion, User, MistakeCount } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { getStudentsByTeacherId } from "@/data/mockData";
+import { useAuth } from "@/context/AuthContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import StudentList from "@/components/ui/StudentList";
+import { X } from "lucide-react";
 
 // List of Surahs for the dropdown
 const SURAHS = [
@@ -35,6 +40,7 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
   onSuccess 
 }) => {
   const navigate = useNavigate();
+  const { authState } = useAuth();
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [recitationType, setRecitationType] = useState<RecitationType>("Sabaq");
   const [surahName, setSurahName] = useState<string>("");
@@ -49,6 +55,32 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
   const [mistakeCounts, setMistakeCounts] = useState<MistakeCount[]>([
     { portion: "Full", mistakes: 0, stucks: 0, markedMistakes: 0 }
   ]);
+  
+  // New states for student selection
+  const [selectedStudentId, setSelectedStudentId] = useState<string | undefined>(studentId);
+  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
+  const [isStudentDialogOpen, setIsStudentDialogOpen] = useState(false);
+  const [students, setStudents] = useState<User[]>([]);
+  
+  // Check if current user is a teacher
+  const isTeacher = user.role === "teacher";
+  
+  // Fetch students if the user is a teacher
+  useEffect(() => {
+    if (isTeacher) {
+      const teacherStudents = getStudentsByTeacherId(user.id);
+      setStudents(teacherStudents);
+      
+      // If studentId is provided and exists in the students list, set the selected student
+      if (studentId) {
+        const student = teacherStudents.find(s => s.id === studentId);
+        if (student) {
+          setSelectedStudent(student);
+          setSelectedStudentId(studentId);
+        }
+      }
+    }
+  }, [isTeacher, user.id, studentId]);
 
   const handlePortionTypeChange = (value: MistakePortion) => {
     setPortionType(value);
@@ -81,14 +113,28 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
     };
     setMistakeCounts(newMistakeCounts);
   };
+  
+  const handleSelectStudent = (student: User) => {
+    setSelectedStudent(student);
+    setSelectedStudentId(student.id);
+    setIsStudentDialogOpen(false);
+  };
+  
+  const clearSelectedStudent = () => {
+    setSelectedStudent(null);
+    setSelectedStudentId(undefined);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Determine the user ID for the log (current user or selected student)
+    const logUserId = selectedStudentId || user.id;
+    
     // In a real app, we would save this data to a database
     // For now, we'll just navigate back and show a success message
     console.log({
-      userId: studentId || user.id,
+      userId: logUserId,
       date,
       recitationType,
       surahName: recitationType === "Sabaq" || recitationType === "Last 3 Sabaqs" ? surahName : undefined,
@@ -277,6 +323,53 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Student Selection for Teachers */}
+      {isTeacher && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Student</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {selectedStudent ? (
+              <div className="relative">
+                <UserProfile user={selectedStudent} />
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="absolute top-2 right-2 h-6 w-6 p-0 rounded-full text-muted-foreground"
+                  onClick={clearSelectedStudent}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => setIsStudentDialogOpen(true)}
+              >
+                Select Student
+              </Button>
+            )}
+            
+            <Dialog open={isStudentDialogOpen} onOpenChange={setIsStudentDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Select a Student</DialogTitle>
+                </DialogHeader>
+                
+                <StudentList 
+                  students={students} 
+                  selectable={true}
+                  onSelectStudent={handleSelectStudent}
+                />
+              </DialogContent>
+            </Dialog>
+          </CardContent>
+        </Card>
+      )}
+      
       <Card>
         <CardHeader>
           <CardTitle>Basic Information</CardTitle>

@@ -11,6 +11,7 @@ export interface User {
   role: UserRole;
   profileImage?: string;
   teacherId?: string; // for students, reference to their teacher
+  email?: string;
 }
 
 export interface MistakeCount {
@@ -35,4 +36,28 @@ export interface RecitationLog {
   testerName: string;
   notes?: string;
   createdAt: string;
+}
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  user: User | null;
+  loading: boolean;
+}
+
+export interface AnalyticsData {
+  consistency: {
+    date: string;
+    count: number;
+  }[];
+  mistakes: {
+    date: string;
+    mistakes: number;
+    stucks: number;
+    marked: number;
+  }[];
+  recentContent: {
+    type: 'surah' | 'juz';
+    name: string;
+    count: number;
+  }[];
 }
