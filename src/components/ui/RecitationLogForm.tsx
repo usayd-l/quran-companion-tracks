@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { RecitationType, MistakePortion, User, MistakeCount } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -15,11 +14,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { getStudentsByTeacherId } from "@/data/mockData";
+import { getStudentsByTeacherId, mockLogs } from "@/data/mockData";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import StudentList from "@/components/ui/StudentList";
 import { X } from "lucide-react";
+import UserProfile from "@/components/ui/UserProfile";
+import { v4 as uuidv4 } from 'uuid';
+import { useToast } from "@/components/ui/use-toast";
 
 // List of Surahs for the dropdown
 const SURAHS = [
@@ -125,15 +127,17 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
     setSelectedStudentId(undefined);
   };
 
+  const { toast } = useToast();
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Determine the user ID for the log (current user or selected student)
     const logUserId = selectedStudentId || user.id;
     
-    // In a real app, we would save this data to a database
-    // For now, we'll just navigate back and show a success message
-    console.log({
+    // Create a new log object
+    const newLog = {
+      id: uuidv4(),
       userId: logUserId,
       date,
       recitationType,
@@ -147,6 +151,15 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
       testerName,
       notes,
       createdAt: new Date().toISOString()
+    };
+    
+    // Add the new log to the mockLogs array
+    mockLogs.push(newLog);
+    
+    console.log("New log created:", newLog);
+    toast({
+      title: "Log Created",
+      description: "Recitation log has been successfully saved.",
     });
     
     if (onSuccess) {

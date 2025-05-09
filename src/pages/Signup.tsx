@@ -4,11 +4,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { UserRole } from "@/types";
+import RoleSelectionCard from "@/components/ui/RoleSelectionCard";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -92,20 +92,18 @@ const Signup = () => {
             
             <div className="space-y-2">
               <Label>I am a:</Label>
-              <RadioGroup 
-                value={role} 
-                onValueChange={(value) => setRole(value as UserRole)}
-                className="flex space-x-8 mt-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="student" id="student" />
-                  <Label htmlFor="student">Individual Memorizer</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="teacher" id="teacher" />
-                  <Label htmlFor="teacher">Teacher</Label>
-                </div>
-              </RadioGroup>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                <RoleSelectionCard 
+                  role="student" 
+                  selectedRole={role} 
+                  onSelect={setRole} 
+                />
+                <RoleSelectionCard 
+                  role="teacher" 
+                  selectedRole={role} 
+                  onSelect={setRole} 
+                />
+              </div>
             </div>
           </CardContent>
           

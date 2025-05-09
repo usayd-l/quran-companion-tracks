@@ -1,4 +1,3 @@
-
 import { User, RecitationLog, RecitationType } from "../types";
 
 export const mockUsers: User[] = [
@@ -30,6 +29,7 @@ export const mockUsers: User[] = [
   }
 ];
 
+// Export mockLogs so it can be updated when new logs are created
 export const mockLogs: RecitationLog[] = [
   {
     id: "1",
