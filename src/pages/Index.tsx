@@ -17,6 +17,7 @@ const Index = () => {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState<"dashboard" | "students">("dashboard");
   const [students, setStudents] = useState<User[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // If not authenticated, redirect to login
   useEffect(() => {
@@ -38,7 +39,7 @@ const Index = () => {
     if (user.role === "teacher") {
       setStudents(getStudentsByTeacherId(user.id));
     }
-  }, [user.id, user.role]);
+  }, [user.id, user.role, refreshTrigger]);
 
   // Get logs based on the user's role
   const userLogs = user.role === "student" 
@@ -48,6 +49,11 @@ const Index = () => {
   // Handle creating a log for a specific student
   const handleCreateLog = (studentId: string) => {
     navigate(`/create-log/${studentId}`);
+  };
+
+  // Handle refreshing student list after adding a new student
+  const handleStudentAdded = () => {
+    setRefreshTrigger(prev => prev + 1);
   };
 
   return (
@@ -75,6 +81,7 @@ const Index = () => {
               user={user}
               logs={userLogs}
               showStudentNames={true}
+              refreshTrigger={refreshTrigger}
             />
           </TabsContent>
           <TabsContent value="students">
@@ -85,6 +92,11 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="text-center pb-6">
                   <p className="text-muted-foreground mb-4">You don't have any students yet.</p>
+                  <StudentList 
+                    students={[]} 
+                    teacherId={user.id}
+                    onStudentAdded={handleStudentAdded}
+                  />
                 </CardContent>
               </Card>
             ) : (
@@ -93,6 +105,8 @@ const Index = () => {
                 <StudentList 
                   students={students} 
                   onCreateLog={handleCreateLog}
+                  teacherId={user.id}
+                  onStudentAdded={handleStudentAdded}
                 />
               </div>
             )}

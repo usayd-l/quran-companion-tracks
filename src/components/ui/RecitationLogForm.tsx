@@ -21,7 +21,7 @@ import StudentList from "@/components/ui/StudentList";
 import { X } from "lucide-react";
 import UserProfile from "@/components/ui/UserProfile";
 import { v4 as uuidv4 } from 'uuid';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 // List of Surahs for the dropdown
 const SURAHS = [

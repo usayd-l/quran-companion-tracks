@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { User, RecitationLog } from "@/types";
 import { Button } from "@/components/ui/button";
 import LogEntry from "./LogEntry";
@@ -9,20 +9,34 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { generateAnalyticsData } from "@/data/analyticsData";
 import AnalyticsDashboard from "./analytics/AnalyticsDashboard";
+import { getLogsByUserId } from "@/data/mockData";
 
 interface DashboardProps {
   user: User;
   logs: RecitationLog[];
   showStudentNames?: boolean;
+  refreshTrigger?: number;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
   user, 
-  logs,
-  showStudentNames = false
+  logs: initialLogs,
+  showStudentNames = false,
+  refreshTrigger = 0
 }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"logs" | "analytics">("logs");
+  const [logs, setLogs] = useState<RecitationLog[]>(initialLogs);
+  
+  // Re-fetch logs when refreshTrigger changes or when initialLogs change
+  useEffect(() => {
+    if (user.role === "student") {
+      setLogs(getLogsByUserId(user.id));
+    } else {
+      // For teachers, we'll use the logs passed from the parent which are already updated
+      setLogs(initialLogs);
+    }
+  }, [initialLogs, user.id, user.role, refreshTrigger]);
   
   const recentLogs = [...logs].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()

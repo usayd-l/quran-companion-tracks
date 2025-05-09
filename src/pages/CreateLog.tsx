@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { getUserById } from "@/data/mockData";
 import { useParams, useNavigate } from "react-router-dom";
 import RecitationLogForm from "@/components/ui/RecitationLogForm";
@@ -12,6 +12,7 @@ const CreateLog = () => {
   const navigate = useNavigate();
   const { authState } = useAuth();
   const { studentId } = useParams<{ studentId?: string }>();
+  const [refreshKey, setRefreshKey] = useState(0);
   
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -46,6 +47,13 @@ const CreateLog = () => {
     );
   }
   
+  const handleLogSuccess = () => {
+    // Increment refresh key to trigger a refresh of the dashboard
+    setRefreshKey(prev => prev + 1);
+    // Navigate back with a small delay to ensure the refresh happens
+    setTimeout(() => navigate(-1), 100);
+  };
+
   return (
     <div className="container max-w-md mx-auto px-4 py-0 pattern-bg">
       <Header />
@@ -70,9 +78,7 @@ const CreateLog = () => {
       <RecitationLogForm 
         user={user} 
         studentId={studentId}
-        onSuccess={() => {
-          // In a real app, we would update the dashboard data
-        }} 
+        onSuccess={handleLogSuccess} 
       />
     </div>
   );
