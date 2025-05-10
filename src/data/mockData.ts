@@ -1,3 +1,4 @@
+
 import { User, RecitationLog, RecitationType } from "../types";
 
 export const mockUsers: User[] = [
@@ -5,26 +6,36 @@ export const mockUsers: User[] = [
     id: "1",
     name: "Ahmad Ali",
     role: "student",
-    teacherId: "3",
+    teacherId: "3", // Legacy field
+    classroomId: "class1", // New field
+    email: "ahmad@example.com",
+    password: "password123",
     profileImage: "https://ui-avatars.com/api/?name=Ahmad+Ali&background=E9F0E6&color=4A6741"
   },
   {
     id: "2",
     name: "Fatima Hassan",
     role: "student",
-    teacherId: "3",
+    teacherId: "3", // Legacy field
+    classroomId: "class1", // New field
+    email: "fatima@example.com",
+    password: "password123",
     profileImage: "https://ui-avatars.com/api/?name=Fatima+Hassan&background=E9F0E6&color=4A6741"
   },
   {
     id: "3",
     name: "Yusuf Khan",
     role: "teacher",
+    email: "yusuf@example.com",
+    password: "password123",
     profileImage: "https://ui-avatars.com/api/?name=Yusuf+Khan&background=D3B88C&color=2D2A26"
   },
   {
     id: "4",
     name: "Aisha Mohammad",
     role: "student",
+    email: "aisha@example.com",
+    password: "password123", 
     profileImage: "https://ui-avatars.com/api/?name=Aisha+Mohammad&background=E9F0E6&color=4A6741"
   }
 ];
@@ -116,25 +127,5 @@ export const mockLogs: RecitationLog[] = [
   }
 ];
 
-// Helper function to get logs for a specific user
-export const getLogsByUserId = (userId: string): RecitationLog[] => {
-  return mockLogs.filter(log => log.userId === userId);
-};
-
-// Helper function to get students for a specific teacher
-export const getStudentsByTeacherId = (teacherId: string): User[] => {
-  return mockUsers.filter(user => user.teacherId === teacherId);
-};
-
-// Helper function to get user by ID
-export const getUserById = (userId: string): User | undefined => {
-  return mockUsers.find(user => user.id === userId);
-};
-
-// Helper function to get log by ID
-export const getLogById = (logId: string): RecitationLog | undefined => {
-  return mockLogs.find(log => log.id === logId);
-};
-
-// Mock currently logged in user (for demonstration)
-export const currentUser = mockUsers[2]; // Teacher Yusuf Khan
+// This file now only exports the initial mock data
+// All data operations are handled through the localStorage service

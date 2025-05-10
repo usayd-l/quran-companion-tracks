@@ -13,6 +13,7 @@ interface StudentListProps {
   selectable?: boolean;
   onSelectStudent?: (student: User) => void;
   teacherId?: string;
+  classroomId?: string;
   onStudentAdded?: () => void;
 }
 
@@ -22,6 +23,7 @@ const StudentList: React.FC<StudentListProps> = ({
   selectable = false,
   onSelectStudent,
   teacherId,
+  classroomId,
   onStudentAdded
 }) => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -75,8 +77,8 @@ const StudentList: React.FC<StudentListProps> = ({
         </div>
       )}
       
-      {/* Add Student Button - Only show if teacherId is provided */}
-      {teacherId && (
+      {/* Only show add student button if classroomId is provided */}
+      {classroomId && (
         <div className="mt-6">
           <Button 
             variant="outline" 
@@ -90,7 +92,7 @@ const StudentList: React.FC<StudentListProps> = ({
           <AddStudentDialog
             open={isAddDialogOpen}
             onOpenChange={setIsAddDialogOpen}
-            teacherId={teacherId}
+            classroomId={classroomId}
             onSuccess={onStudentAdded}
           />
         </div>

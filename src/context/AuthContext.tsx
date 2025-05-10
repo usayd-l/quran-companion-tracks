@@ -1,7 +1,15 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, AuthState } from "@/types";
-import { getUserById } from "@/data/mockData";
+import {
+  initializeLocalStorage,
+  authenticateUser,
+  saveUser,
+  saveCurrentUser,
+  getCurrentUser,
+} from "@/services/localStorage";
+import { v4 as uuidv4 } from 'uuid';
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthContextProps {
   authState: AuthState;
@@ -26,53 +34,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user: null,
     loading: true,
   });
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Check for saved auth in localStorage
-    const savedUser = localStorage.getItem("quranCompanionUser");
+    // Initialize localStorage with demo data
+    initializeLocalStorage();
+    
+    // Check for saved auth
+    const savedUser = getCurrentUser();
     if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        setAuthState({
-          isAuthenticated: true,
-          user,
-          loading: false,
-        });
-      } catch (error) {
-        console.error("Failed to parse saved user", error);
-        localStorage.removeItem("quranCompanionUser");
-        setAuthState({ isAuthenticated: false, user: null, loading: false });
-      }
+      setAuthState({
+        isAuthenticated: true,
+        user: savedUser,
+        loading: false,
+      });
     } else {
       setAuthState({ isAuthenticated: false, user: null, loading: false });
     }
   }, []);
 
   const login = async (email: string, password: string) => {
-    // In a real app, this would make an API call
-    // For now, we'll use mock data
     try {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Mock user login (would be an API call in a real app)
-      const user = getUserById("user1");
+      // Authenticate user
+      const user = authenticateUser(email, password);
       if (!user) {
         throw new Error("Invalid credentials");
       }
-
-      // Add email to the user object
-      const authenticatedUser = {
-        ...user,
-        email
-      };
       
       // Store user in localStorage
-      localStorage.setItem("quranCompanionUser", JSON.stringify(authenticatedUser));
+      saveCurrentUser(user);
       
       setAuthState({
         isAuthenticated: true,
-        user: authenticatedUser,
+        user,
         loading: false,
       });
     } catch (error) {
@@ -82,21 +79,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signup = async (name: string, email: string, password: string, role: 'student' | 'teacher') => {
-    // In a real app, this would make an API call
     try {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Create new user (would be an API call in a real app)
+      // Create new user
       const newUser: User = {
-        id: `user-${Date.now()}`,
+        id: uuidv4(),
         name,
         role,
         email,
+        password,
+        profileImage: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${role === 'teacher' ? 'D3B88C' : 'E9F0E6'}&color=${role === 'teacher' ? '2D2A26' : '4A6741'}`
       };
       
+      // Save user to "database"
+      saveUser(newUser);
+      
       // Store user in localStorage
-      localStorage.setItem("quranCompanionUser", JSON.stringify(newUser));
+      saveCurrentUser(newUser);
       
       setAuthState({
         isAuthenticated: true,
@@ -110,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    localStorage.removeItem("quranCompanionUser");
+    saveCurrentUser(null);
     setAuthState({
       isAuthenticated: false,
       user: null,

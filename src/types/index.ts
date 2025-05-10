@@ -10,8 +10,17 @@ export interface User {
   name: string;
   role: UserRole;
   profileImage?: string;
-  teacherId?: string; // for students, reference to their teacher
+  teacherId?: string; // deprecated - using classroomId instead
+  classroomId?: string; // for students, reference to their classroom
   email?: string;
+  password?: string; // For local authentication only (not for production use)
+}
+
+export interface Classroom {
+  id: string;
+  name: string;
+  teacherId: string;
+  classCode: string;
 }
 
 export interface MistakeCount {

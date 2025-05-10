@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { generateAnalyticsData } from "@/data/analyticsData";
 import AnalyticsDashboard from "./analytics/AnalyticsDashboard";
-import { getLogsByUserId } from "@/data/mockData";
+import { getLogs } from "@/services/localStorage";
 
 interface DashboardProps {
   user: User;
@@ -30,13 +30,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   
   // Re-fetch logs when refreshTrigger changes or when initialLogs change
   useEffect(() => {
-    if (user.role === "student") {
-      setLogs(getLogsByUserId(user.id));
-    } else {
-      // For teachers, we'll use the logs passed from the parent which are already updated
-      setLogs(initialLogs);
-    }
-  }, [initialLogs, user.id, user.role, refreshTrigger]);
+    setLogs(initialLogs);
+  }, [initialLogs, refreshTrigger]);
   
   const recentLogs = [...logs].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -44,12 +39,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   
   const analyticsData = generateAnalyticsData(logs);
 
-  const handleCreateLog = (studentId?: string) => {
-    if (studentId) {
-      navigate(`/create-log/${studentId}`);
-    } else {
-      navigate("/create-log");
-    }
+  const handleCreateLog = () => {
+    navigate("/create-log");
   };
 
   return (
@@ -73,13 +64,15 @@ const Dashboard: React.FC<DashboardProps> = ({
         <TabsContent value="logs">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Recent Activity</h2>
-            <Button 
-              className="bg-primary hover:bg-primary/90"
-              onClick={() => handleCreateLog()}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Log
-            </Button>
+            {user.role === "student" && (
+              <Button 
+                className="bg-primary hover:bg-primary/90"
+                onClick={handleCreateLog}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Log
+              </Button>
+            )}
           </div>
           
           {recentLogs.length === 0 ? (
@@ -88,13 +81,19 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <CardTitle className="text-center text-lg">No logs yet</CardTitle>
               </CardHeader>
               <CardContent className="text-center pb-6">
-                <p className="text-muted-foreground mb-4">Start tracking your Quran memorization journey by creating your first log.</p>
-                <Button 
-                  className="bg-primary hover:bg-primary/90"
-                  onClick={() => handleCreateLog()}
-                >
-                  Create First Log
-                </Button>
+                <p className="text-muted-foreground mb-4">
+                  {user.role === "student" 
+                    ? "Start tracking your Quran memorization journey by creating your first log." 
+                    : "Your students haven't recorded any logs yet."}
+                </p>
+                {user.role === "student" && (
+                  <Button 
+                    className="bg-primary hover:bg-primary/90"
+                    onClick={handleCreateLog}
+                  >
+                    Create First Log
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
