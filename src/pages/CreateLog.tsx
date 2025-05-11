@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from "react";
-import { getUserById } from "@/data/mockData";
+import { getUserById } from "@/services/localStorage";
 import { useParams, useNavigate } from "react-router-dom";
 import RecitationLogForm from "@/components/ui/RecitationLogForm";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,7 @@ const CreateLog = () => {
   
   // Check if user is allowed to create log for this student
   const canCreateLog = !studentId || 
-    (user.role === "teacher" && student && student.teacherId === user.id);
+    (user.role === "teacher" && student && student.classroomId === user.classroomId);
   
   if (!canCreateLog) {
     // Redirect if not authorized

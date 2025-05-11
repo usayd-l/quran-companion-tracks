@@ -1,6 +1,9 @@
 
 import { User, RecitationLog, RecitationType } from "../types";
 
+// This file contains initial mock data for seeding the localStorage database
+// All data operations should now use the services/localStorage.ts module instead
+
 export const mockUsers: User[] = [
   {
     id: "1",

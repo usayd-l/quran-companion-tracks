@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { getUserById, getLogsByUserId, currentUser } from "@/data/mockData";
+import { getUserById, getLogsByUserId, getCurrentUser } from "@/services/localStorage";
 import UserProfile from "@/components/ui/UserProfile";
 import LogEntry from "@/components/ui/LogEntry";
 import { Button } from "@/components/ui/button";
@@ -36,16 +35,16 @@ const Profile = () => {
     );
   }
   
-  const logs = getLogsByUserId(user.id);
+  const logs = getLogsByUserId(user?.id || '');
   const analyticsData = generateAnalyticsData(logs);
   
   const recentLogs = [...logs].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
   
-  const isCurrentUser = currentAuthUser && user.id === currentAuthUser.id;
+  const isCurrentUser = currentAuthUser && user && user.id === currentAuthUser.id;
   const isTeacher = currentAuthUser && currentAuthUser.role === "teacher";
-  const isTeacherOfUser = user && user.teacherId === currentAuthUser?.id;
+  const isTeacherOfUser = user && currentAuthUser && user.classroomId === currentAuthUser.classroomId;
   
   const handleCreateLog = () => {
     if (isTeacherOfUser) {

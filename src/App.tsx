@@ -12,6 +12,10 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { initializeLocalStorage } from "./services/localStorage";
+
+// Initialize localStorage with demo data
+initializeLocalStorage();
 
 const queryClient = new QueryClient();
 

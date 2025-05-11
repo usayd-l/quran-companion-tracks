@@ -3,7 +3,7 @@ import React from "react";
 import { RecitationLog, User } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import { getUserById } from "@/data/mockData";
+import { getUserById } from "@/services/localStorage";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { BookOpen } from "lucide-react";

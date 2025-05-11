@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { getStudentsByTeacherId, mockLogs } from "@/data/mockData";
+import { getUsersByClassroomId, saveLog } from "@/services/localStorage";
 import { useAuth } from "@/context/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import StudentList from "@/components/ui/StudentList";
@@ -70,7 +70,7 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
   // Fetch students if the user is a teacher
   useEffect(() => {
     if (isTeacher) {
-      const teacherStudents = getStudentsByTeacherId(user.id);
+      const teacherStudents = getUsersByClassroomId(user.classroomId || '');
       setStudents(teacherStudents);
       
       // If studentId is provided and exists in the students list, set the selected student
@@ -82,7 +82,7 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
         }
       }
     }
-  }, [isTeacher, user.id, studentId]);
+  }, [isTeacher, user.id, studentId, user.classroomId]);
 
   const handlePortionTypeChange = (value: MistakePortion) => {
     setPortionType(value);
@@ -153,8 +153,8 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
       createdAt: new Date().toISOString()
     };
     
-    // Add the new log to the mockLogs array
-    mockLogs.push(newLog);
+    // Add the new log to localStorage
+    saveLog(newLog);
     
     console.log("New log created:", newLog);
     toast({

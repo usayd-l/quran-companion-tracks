@@ -1,4 +1,3 @@
-
 import { User, RecitationLog, Classroom } from "@/types";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -24,6 +23,7 @@ const demoStudent: User = {
   email: "student@demo.com",
   password: "password123",
   role: "student",
+  classroomId: "classroom1",
   profileImage: "https://ui-avatars.com/api/?name=Demo+Student&background=E9F0E6&color=4A6741"
 };
 
@@ -69,6 +69,9 @@ export const initializeLocalStorage = () => {
     localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
   }
 };
+
+// Import the mock data to initialize
+import { mockUsers, mockLogs } from "@/data/mockData";
 
 // User functions
 export const getUsers = (): User[] => {
@@ -212,6 +215,3 @@ export const saveClassroom = (classroom: Classroom): Classroom => {
   localStorage.setItem(CLASSROOMS_KEY, JSON.stringify(classrooms));
   return classroom;
 };
-
-// Import the mock data to initialize
-import { mockUsers, mockLogs } from "@/data/mockData";

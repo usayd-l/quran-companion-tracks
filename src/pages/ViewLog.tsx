@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getLogById, getUserById } from "@/data/mockData";
+import { getLogById, getUserById } from "@/services/localStorage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
