@@ -129,44 +129,65 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
 
   const { toast } = useToast();
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Determine the user ID for the log (current user or selected student)
-    const logUserId = selectedStudentId || user.id;
-    
-    // Create a new log object
-    const newLog = {
-      id: uuidv4(),
-      userId: logUserId,
-      date,
-      recitationType,
-      surahName: recitationType === "Sabaq" || recitationType === "Last 3 Sabaqs" ? surahName : undefined,
-      ayahStart: recitationType === "Sabaq" || recitationType === "Last 3 Sabaqs" ? parseInt(ayahStart) : undefined,
-      ayahEnd: recitationType === "Sabaq" || recitationType === "Last 3 Sabaqs" ? parseInt(ayahEnd) : undefined,
-      juzNumber: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(juzNumber) : undefined,
-      pageStart: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(pageStart) : undefined,
-      pageEnd: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(pageEnd) : undefined,
-      mistakeCounts,
-      testerName,
-      notes,
-      createdAt: new Date().toISOString()
-    };
-    
-    // Add the new log to localStorage
-    saveLog(newLog);
-    
-    console.log("New log created:", newLog);
-    toast({
-      title: "Log Created",
-      description: "Recitation log has been successfully saved.",
-    });
-    
-    if (onSuccess) {
-      onSuccess();
+    try {
+      console.log("Starting log submission...");
+      console.log("Current auth state:", authState);
+      
+      // Determine the user ID for the log (current user or selected student)
+      const logUserId = selectedStudentId || user.id;
+      
+      // Create a new log object
+      const newLog = {
+        id: uuidv4(),
+        userId: logUserId,
+        date,
+        recitationType,
+        surahName: recitationType === "Sabaq" || recitationType === "Last 3 Sabaqs" ? surahName : undefined,
+        ayahStart: recitationType === "Sabaq" || recitationType === "Last 3 Sabaqs" ? parseInt(ayahStart) : undefined,
+        ayahEnd: recitationType === "Sabaq" || recitationType === "Last 3 Sabaqs" ? parseInt(ayahEnd) : undefined,
+        juzNumber: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(juzNumber) : undefined,
+        pageStart: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(pageStart) : undefined,
+        pageEnd: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(pageEnd) : undefined,
+        mistakeCounts,
+        testerName,
+        notes,
+        createdAt: new Date().toISOString()
+      };
+      
+      console.log("Saving log:", newLog);
+      
+      // Add the new log to localStorage
+      saveLog(newLog);
+      
+      console.log("Log saved successfully");
+      
+      toast({
+        title: "Log Created",
+        description: "Recitation log has been successfully saved.",
+      });
+      
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        console.log("Calling onSuccess callback");
+        onSuccess();
+      } else {
+        // If no onSuccess callback, navigate to home
+        console.log("Navigating to home");
+        navigate("/");
+      }
+      
+      console.log("Form submission completed");
+    } catch (error) {
+      console.error("Error saving log:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save the recitation log. Please try again.",
+        variant: "destructive",
+      });
     }
-    
-    navigate(-1);
   };
 
   const renderRecitationFields = () => {

@@ -11,7 +11,6 @@ const CreateLog = () => {
   const navigate = useNavigate();
   const { authState } = useAuth();
   const { studentId } = useParams<{ studentId?: string }>();
-  const [refreshKey, setRefreshKey] = useState(0);
   
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -47,10 +46,8 @@ const CreateLog = () => {
   }
   
   const handleLogSuccess = () => {
-    // Increment refresh key to trigger a refresh of the dashboard
-    setRefreshKey(prev => prev + 1);
-    // Navigate back with a small delay to ensure the refresh happens
-    setTimeout(() => navigate(-1), 100);
+    console.log("Log creation successful, navigating to home");
+    navigate("/");
   };
 
   return (
@@ -61,7 +58,7 @@ const CreateLog = () => {
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/")}
           className="mr-4"
         >
           <ChevronLeft className="h-4 w-4" />

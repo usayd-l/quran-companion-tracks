@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { User, RecitationLog } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { Plus, BarChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { generateAnalyticsData } from "@/data/analyticsData";
 import AnalyticsDashboard from "./analytics/AnalyticsDashboard";
 import { getLogs } from "@/services/localStorage";
 
@@ -36,8 +34,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const recentLogs = [...logs].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   ).slice(0, 5);
-  
-  const analyticsData = generateAnalyticsData(logs);
 
   const handleCreateLog = () => {
     navigate("/create-log");
@@ -123,7 +119,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <p className="text-sm text-muted-foreground">Track your progress and identify patterns</p>
           </div>
           
-          <AnalyticsDashboard data={analyticsData} />
+          <AnalyticsDashboard logs={logs} />
         </TabsContent>
       </Tabs>
     </div>

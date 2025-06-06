@@ -1,20 +1,32 @@
 
 import React from "react";
-import ConsistencyChart from "./ConsistencyChart";
-import MistakesTrendChart from "./MistakesTrendChart";
-import RecentContentSummary from "./RecentContentSummary";
-import { AnalyticsData } from "@/types";
+import { RecitationLog } from "@/types";
+import { generateTypeSpecificAnalytics } from "@/services/analyticsService";
+import TypeSpecificChart from "./TypeSpecificChart";
 
 interface AnalyticsDashboardProps {
-  data: AnalyticsData;
+  logs: RecitationLog[];
 }
 
-const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ data }) => {
+const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ logs }) => {
+  const typeAnalytics = generateTypeSpecificAnalytics(logs);
+
+  if (typeAnalytics.length === 0) {
+    return (
+      <div className="text-center p-6">
+        <h3 className="text-lg font-medium mb-2">No Analytics Data</h3>
+        <p className="text-muted-foreground">
+          Start creating recitation logs to see your progress analytics.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <ConsistencyChart data={data.consistency} />
-      <MistakesTrendChart data={data.mistakes} />
-      <RecentContentSummary data={data.recentContent} />
+      {typeAnalytics.map((typeData) => (
+        <TypeSpecificChart key={typeData.type} data={typeData} />
+      ))}
     </div>
   );
 };

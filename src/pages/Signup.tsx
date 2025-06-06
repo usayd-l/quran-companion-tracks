@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -110,12 +109,23 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
-  
+
+  const navigate = useNavigate();
+
+  const handleBackToLogin = () => {
+    navigate("/login");
+  };
+
   // Render the appropriate screen
   const renderContent = () => {
     switch (currentScreen) {
       case 'role-selection':
-        return <RoleSelectionScreen onSelectRole={handleRoleSelect} />;
+        return (
+          <RoleSelectionScreen 
+            onSelectRole={handleRoleSelect} 
+            onBack={handleBackToLogin}
+          />
+        );
         
       case 'classroom-join':
         return (

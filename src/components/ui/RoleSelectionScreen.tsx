@@ -1,21 +1,38 @@
 
 import React from "react";
 import { UserRole } from "@/types";
-import { User, Users } from "lucide-react";
+import { User, Users, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface RoleSelectionScreenProps {
   onSelectRole: (role: UserRole) => void;
+  onBack?: () => void;
 }
 
 const RoleSelectionScreen: React.FC<RoleSelectionScreenProps> = ({
   onSelectRole,
+  onBack,
 }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-center">Select your role</CardTitle>
+        <div className="flex items-center">
+          {onBack && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="mr-2 p-0 h-8 w-8"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          )}
+          <CardTitle className="flex-1 text-center pr-8">
+            Select your role
+          </CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
