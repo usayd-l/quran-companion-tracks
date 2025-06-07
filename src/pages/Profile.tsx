@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getUserById, getLogsByUserId, getCurrentUser } from "@/services/localStorage";
@@ -8,7 +9,6 @@ import { ChevronLeft, Plus, BarChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/ui/Header";
-import { generateAnalyticsData } from "@/data/analyticsData";
 import AnalyticsDashboard from "@/components/ui/analytics/AnalyticsDashboard";
 import { useAuth } from "@/context/AuthContext";
 
@@ -36,7 +36,6 @@ const Profile = () => {
   }
   
   const logs = getLogsByUserId(user?.id || '');
-  const analyticsData = generateAnalyticsData(logs);
   
   const recentLogs = [...logs].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -136,7 +135,7 @@ const Profile = () => {
             <p className="text-sm text-muted-foreground">Track progress and identify patterns</p>
           </div>
           
-          <AnalyticsDashboard data={analyticsData} />
+          <AnalyticsDashboard logs={logs} />
         </TabsContent>
       </Tabs>
     </div>

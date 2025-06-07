@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { ArrowLeft } from "lucide-react";
 type SignupScreen = 'role-selection' | 'classroom-join' | 'registration';
 
 const Signup = () => {
+  const navigate = useNavigate();
   const [currentScreen, setCurrentScreen] = useState<SignupScreen>('role-selection');
   const [role, setRole] = useState<UserRole>("student");
   const [classroomId, setClassroomId] = useState<string | undefined>(undefined);
@@ -24,7 +26,6 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleRoleSelect = (selectedRole: UserRole) => {
@@ -109,8 +110,6 @@ const Signup = () => {
       setIsLoading(false);
     }
   };
-
-  const navigate = useNavigate();
 
   const handleBackToLogin = () => {
     navigate("/login");
