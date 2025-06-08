@@ -21,7 +21,7 @@ const Header = () => {
           )}
         </div>
         
-        {authState.user && <UserProfile />}
+        {authState.user && <UserProfile user={authState.user} />}
       </div>
     </header>
   );
