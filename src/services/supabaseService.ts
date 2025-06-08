@@ -1,9 +1,18 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User, RecitationLog, Classroom } from "@/types";
+import { demoDataService } from "./demoDataService";
+
+// Helper function to check if we're in demo mode
+const isDemoMode = () => {
+  return localStorage.getItem('demoUser') !== null;
+};
 
 // User/Profile functions
 export const getUserById = async (userId: string): Promise<User | null> => {
+  if (isDemoMode()) {
+    return await demoDataService.getUserById(userId);
+  }
+
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -29,6 +38,10 @@ export const getUserById = async (userId: string): Promise<User | null> => {
 };
 
 export const getUsersByClassroomId = async (classroomId: string): Promise<User[]> => {
+  if (isDemoMode()) {
+    return await demoDataService.getUsersByClassroomId(classroomId);
+  }
+
   const { data, error } = await supabase
     .from('classroom_members')
     .select(`
@@ -58,6 +71,10 @@ export const getUsersByClassroomId = async (classroomId: string): Promise<User[]
 
 // Classroom functions
 export const getClassroomsByTeacherId = async (teacherId: string): Promise<Classroom[]> => {
+  if (isDemoMode()) {
+    return await demoDataService.getClassroomsByTeacherId(teacherId);
+  }
+
   const { data, error } = await supabase
     .from('classrooms')
     .select('*')
@@ -77,6 +94,14 @@ export const getClassroomsByTeacherId = async (teacherId: string): Promise<Class
 };
 
 export const getClassroomByCode = async (classCode: string): Promise<Classroom | null> => {
+  if (isDemoMode()) {
+    // In demo mode, only accept the demo class code
+    if (classCode === "DEMO123") {
+      return demoDataService.getClassroomsByTeacherId("demo-teacher-id").then(classrooms => classrooms[0] || null);
+    }
+    return null;
+  }
+
   const { data, error } = await supabase
     .from('classrooms')
     .select('*')
@@ -96,6 +121,14 @@ export const getClassroomByCode = async (classCode: string): Promise<Classroom |
 };
 
 export const saveClassroom = async (classroom: Omit<Classroom, 'id'>): Promise<Classroom | null> => {
+  if (isDemoMode()) {
+    // In demo mode, return the classroom with a demo ID
+    return {
+      ...classroom,
+      id: `demo-classroom-${Date.now()}`
+    };
+  }
+
   const { data, error } = await supabase
     .from('classrooms')
     .insert({
@@ -120,6 +153,11 @@ export const saveClassroom = async (classroom: Omit<Classroom, 'id'>): Promise<C
 };
 
 export const joinClassroom = async (userId: string, classroomId: string): Promise<boolean> => {
+  if (isDemoMode()) {
+    // In demo mode, always return success
+    return true;
+  }
+
   const { error } = await supabase
     .from('classroom_members')
     .insert({
@@ -137,6 +175,10 @@ export const joinClassroom = async (userId: string, classroomId: string): Promis
 
 // Log functions
 export const getLogsByUserId = async (userId: string): Promise<RecitationLog[]> => {
+  if (isDemoMode()) {
+    return await demoDataService.getLogsByUserId(userId);
+  }
+
   const { data, error } = await supabase
     .from('recitation_logs')
     .select(`
@@ -175,6 +217,10 @@ export const getLogsByUserId = async (userId: string): Promise<RecitationLog[]> 
 };
 
 export const getLogsByClassroomId = async (classroomId: string): Promise<RecitationLog[]> => {
+  if (isDemoMode()) {
+    return await demoDataService.getLogsByClassroomId(classroomId);
+  }
+
   // First get all student IDs in the classroom
   const { data: members, error: membersError } = await supabase
     .from('classroom_members')
@@ -232,6 +278,12 @@ export const getLogsByClassroomId = async (classroomId: string): Promise<Recitat
 };
 
 export const getLogById = async (logId: string): Promise<RecitationLog | null> => {
+  if (isDemoMode()) {
+    // In demo mode, find the log in our demo data
+    const { demoLogs } = await import('./demoDataService');
+    return demoLogs.find(log => log.id === logId) || null;
+  }
+
   const { data, error } = await supabase
     .from('recitation_logs')
     .select(`
@@ -270,6 +322,10 @@ export const getLogById = async (logId: string): Promise<RecitationLog | null> =
 };
 
 export const saveLog = async (log: Omit<RecitationLog, 'id' | 'createdAt'>): Promise<RecitationLog | null> => {
+  if (isDemoMode()) {
+    return await demoDataService.saveLog(log);
+  }
+
   // First, insert the log
   const { data: logData, error: logError } = await supabase
     .from('recitation_logs')
@@ -334,6 +390,11 @@ export const saveLog = async (log: Omit<RecitationLog, 'id' | 'createdAt'>): Pro
 
 // Get logs grouped by date
 export const getLogsByDate = async (userId: string, date: string): Promise<RecitationLog[]> => {
+  if (isDemoMode()) {
+    const logs = await demoDataService.getLogsByUserId(userId);
+    return logs.filter(log => log.date === date);
+  }
+
   const { data, error } = await supabase
     .from('recitation_logs')
     .select(`
@@ -374,6 +435,12 @@ export const getLogsByDate = async (userId: string, date: string): Promise<Recit
 
 // Get unique dates for a user
 export const getLogDates = async (userId: string): Promise<string[]> => {
+  if (isDemoMode()) {
+    const logs = await demoDataService.getLogsByUserId(userId);
+    const uniqueDates = [...new Set(logs.map(log => log.date))];
+    return uniqueDates.sort().reverse();
+  }
+
   const { data, error } = await supabase
     .from('recitation_logs')
     .select('date')

@@ -9,7 +9,9 @@ interface AuthContextProps {
   authState: AuthState;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string, role: 'student' | 'teacher') => Promise<void>;
+  loginDemo: (role: 'student' | 'teacher') => void;
   logout: () => void;
+  isDemoMode: boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -22,16 +24,52 @@ export const useAuth = () => {
   return context;
 };
 
+// Demo users for testing
+const demoUsers = {
+  teacher: {
+    id: "demo-teacher-id",
+    name: "Demo Teacher",
+    email: "teacher@demo.com",
+    role: "teacher" as const,
+    profileImage: "https://ui-avatars.com/api/?name=Demo+Teacher&background=D3B88C&color=2D2A26"
+  },
+  student: {
+    id: "demo-student-id", 
+    name: "Demo Student",
+    email: "student@demo.com",
+    role: "student" as const,
+    profileImage: "https://ui-avatars.com/api/?name=Demo+Student&background=E9F0E6&color=4A6741"
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>({
     isAuthenticated: false,
     user: null,
     loading: true,
   });
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener
+    // Check for demo mode first
+    const demoUser = localStorage.getItem('demoUser');
+    if (demoUser) {
+      try {
+        const user = JSON.parse(demoUser);
+        setAuthState({
+          isAuthenticated: true,
+          user,
+          loading: false,
+        });
+        setIsDemoMode(true);
+        return;
+      } catch (error) {
+        localStorage.removeItem('demoUser');
+      }
+    }
+
+    // Set up auth state listener for Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
@@ -58,6 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               user,
               loading: false,
             });
+            setIsDemoMode(false);
           }
         } else {
           setAuthState({
@@ -65,15 +104,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             user: null,
             loading: false,
           });
+          setIsDemoMode(false);
         }
       }
     );
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        // The onAuthStateChange will handle setting the user
-      } else {
+      if (!session) {
         setAuthState({ isAuthenticated: false, user: null, loading: false });
       }
     });
@@ -123,12 +161,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginDemo = (role: 'student' | 'teacher') => {
+    const user = demoUsers[role];
+    localStorage.setItem('demoUser', JSON.stringify(user));
+    setAuthState({
+      isAuthenticated: true,
+      user,
+      loading: false,
+    });
+    setIsDemoMode(true);
+    
+    toast({
+      title: "Demo Mode",
+      description: `Logged in as Demo ${role === 'teacher' ? 'Teacher' : 'Student'}`,
+    });
+  };
+
   const logout = async () => {
-    await supabase.auth.signOut();
+    if (isDemoMode) {
+      localStorage.removeItem('demoUser');
+      setIsDemoMode(false);
+    } else {
+      await supabase.auth.signOut();
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ authState, login, signup, logout }}>
+    <AuthContext.Provider value={{ authState, login, signup, loginDemo, logout, isDemoMode }}>
       {children}
     </AuthContext.Provider>
   );
