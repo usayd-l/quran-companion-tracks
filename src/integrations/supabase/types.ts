@@ -9,7 +9,198 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      classroom_members: {
+        Row: {
+          classroom_id: string
+          id: string
+          joined_at: string | null
+          student_id: string
+        }
+        Insert: {
+          classroom_id: string
+          id?: string
+          joined_at?: string | null
+          student_id: string
+        }
+        Update: {
+          classroom_id?: string
+          id?: string
+          joined_at?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classroom_members_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classroom_members_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classrooms: {
+        Row: {
+          class_code: string
+          created_at: string | null
+          id: string
+          name: string
+          teacher_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          class_code: string
+          created_at?: string | null
+          id?: string
+          name: string
+          teacher_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          class_code?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          teacher_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classrooms_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mistake_counts: {
+        Row: {
+          id: string
+          log_id: string
+          marked_mistakes: number
+          mistakes: number
+          portion: Database["public"]["Enums"]["mistake_portion"]
+          stucks: number
+        }
+        Insert: {
+          id?: string
+          log_id: string
+          marked_mistakes?: number
+          mistakes?: number
+          portion: Database["public"]["Enums"]["mistake_portion"]
+          stucks?: number
+        }
+        Update: {
+          id?: string
+          log_id?: string
+          marked_mistakes?: number
+          mistakes?: number
+          portion?: Database["public"]["Enums"]["mistake_portion"]
+          stucks?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mistake_counts_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "recitation_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          profile_image: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          name: string
+          profile_image?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          profile_image?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      recitation_logs: {
+        Row: {
+          ayah_end: number | null
+          ayah_start: number | null
+          created_at: string | null
+          date: string
+          id: string
+          juz_number: number | null
+          notes: string | null
+          page_end: number | null
+          page_start: number | null
+          recitation_type: Database["public"]["Enums"]["recitation_type"]
+          surah_name: string | null
+          tester_name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ayah_end?: number | null
+          ayah_start?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          juz_number?: number | null
+          notes?: string | null
+          page_end?: number | null
+          page_start?: number | null
+          recitation_type: Database["public"]["Enums"]["recitation_type"]
+          surah_name?: string | null
+          tester_name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ayah_end?: number | null
+          ayah_start?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          juz_number?: number | null
+          notes?: string | null
+          page_end?: number | null
+          page_start?: number | null
+          recitation_type?: Database["public"]["Enums"]["recitation_type"]
+          surah_name?: string | null
+          tester_name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recitation_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +209,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      mistake_portion: "Full" | "Half" | "Quarter"
+      recitation_type: "Sabaq" | "Last 3 Sabaqs" | "Sabaq Dhor" | "Dhor"
+      user_role: "student" | "teacher"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +326,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      mistake_portion: ["Full", "Half", "Quarter"],
+      recitation_type: ["Sabaq", "Last 3 Sabaqs", "Sabaq Dhor", "Dhor"],
+      user_role: ["student", "teacher"],
+    },
   },
 } as const

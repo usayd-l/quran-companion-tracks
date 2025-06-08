@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { User, Users } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -24,33 +23,11 @@ const Login = () => {
     try {
       await login(email, password);
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed", error);
       toast({
         title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async (demoType: 'teacher' | 'student') => {
-    setIsLoading(true);
-    
-    try {
-      if (demoType === 'teacher') {
-        await login("teacher@demo.com", "password123");
-      } else {
-        await login("student@demo.com", "password123");
-      }
-      navigate("/");
-    } catch (error) {
-      console.error("Demo login failed", error);
-      toast({
-        title: "Login Failed",
-        description: "There was a problem with the demo login. Please try again.",
+        description: error.message || "Invalid email or password. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -92,30 +69,6 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-            </div>
-            
-            <div className="pt-4">
-              <p className="text-sm text-center font-medium mb-3">Quick Demo Accounts</p>
-              <div className="flex gap-2">
-                <Button 
-                  type="button" 
-                  className="flex-1 bg-[#D3E4FD] text-primary-foreground hover:bg-[#C0D5F2] text-black"
-                  onClick={() => handleDemoLogin('teacher')}
-                  disabled={isLoading}
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Demo Teacher
-                </Button>
-                <Button 
-                  type="button" 
-                  className="flex-1 bg-[#F2FCE2] text-primary-foreground hover:bg-[#E9F0E6] text-black"
-                  onClick={() => handleDemoLogin('student')}
-                  disabled={isLoading}
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Demo Student
-                </Button>
-              </div>
             </div>
           </CardContent>
           

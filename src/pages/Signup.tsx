@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/types";
 import RoleSelectionScreen from "@/components/ui/RoleSelectionScreen";
 import ClassroomJoinForm from "@/components/ui/ClassroomJoinForm";
-import { findUserByEmail, saveUser } from "@/services/localStorage";
+import { getClassroomByCode, joinClassroom } from "@/services/supabaseService";
 import { ArrowLeft } from "lucide-react";
 
 // Screen types for our multi-step signup
@@ -32,21 +31,28 @@ const Signup = () => {
     setRole(selectedRole);
     
     if (selectedRole === "student") {
-      // For students, go to classroom join screen
       setCurrentScreen('classroom-join');
     } else {
-      // For teachers, go straight to registration
       setCurrentScreen('registration');
     }
   };
 
-  const handleJoinClassroom = (newClassroomId: string) => {
-    setClassroomId(newClassroomId);
-    setCurrentScreen('registration');
+  const handleJoinClassroom = async (classCode: string) => {
+    const classroom = await getClassroomByCode(classCode);
+    if (classroom) {
+      setClassroomId(classroom.id);
+      setCurrentScreen('registration');
+    } else {
+      toast({
+        title: "Classroom not found",
+        description: "Please check the class code and try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSkipClassroom = () => {
-    setClassroomId(undefined); // No classroom
+    setClassroomId(undefined);
     setCurrentScreen('registration');
   };
 
@@ -67,43 +73,26 @@ const Signup = () => {
     setIsLoading(true);
     
     try {
-      // Check if email already exists
-      const existingUser = findUserByEmail(email);
-      if (existingUser) {
-        toast({
-          title: "Email already in use",
-          description: "Please use a different email address or login to your account.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      // Create the account
       await signup(name, email, password, role);
 
-      // If a classroom was selected for a student, update the user
+      // If a classroom was selected for a student, join it after signup
       if (role === "student" && classroomId) {
-        const currentUser = findUserByEmail(email);
-        if (currentUser) {
-          saveUser({
-            ...currentUser,
-            classroomId
-          });
-        }
+        // Note: We'll need to handle this after the user confirms their email
+        // For now, we'll store the classroom ID in localStorage temporarily
+        localStorage.setItem('pendingClassroomId', classroomId);
       }
       
       toast({
         title: "Account created!",
-        description: "Welcome to Quran Companion.",
+        description: "Please check your email to verify your account.",
       });
       
-      navigate("/");
-    } catch (error) {
+      navigate("/login");
+    } catch (error: any) {
       console.error("Signup failed", error);
       toast({
         title: "Signup Failed",
-        description: "There was a problem creating your account.",
+        description: error.message || "There was a problem creating your account.",
         variant: "destructive",
       });
     } finally {
@@ -115,7 +104,6 @@ const Signup = () => {
     navigate("/login");
   };
 
-  // Render the appropriate screen
   const renderContent = () => {
     switch (currentScreen) {
       case 'role-selection':

@@ -10,10 +10,8 @@ export interface User {
   name: string;
   role: UserRole;
   profileImage?: string;
-  teacherId?: string; // deprecated - using classroomId instead
-  classroomId?: string; // for students, reference to their classroom
+  classroomId?: string;
   email?: string;
-  password?: string; // For local authentication only (not for production use)
 }
 
 export interface Classroom {
@@ -45,6 +43,7 @@ export interface RecitationLog {
   testerName: string;
   notes?: string;
   createdAt: string;
+  userName?: string; // For teacher views
 }
 
 export interface AuthState {
