@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from "react";
-import { getUserById } from "@/services/localStorage";
+import { getUserById } from "@/services/supabaseService";
 import { useParams, useNavigate } from "react-router-dom";
 import RecitationLogForm from "@/components/ui/RecitationLogForm";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ const CreateLog = () => {
   const navigate = useNavigate();
   const { authState } = useAuth();
   const { studentId } = useParams<{ studentId?: string }>();
+  const [student, setStudent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -18,18 +21,36 @@ const CreateLog = () => {
       navigate("/login");
     }
   }, [authState, navigate]);
+
+  // Fetch student data if studentId is provided
+  useEffect(() => {
+    const fetchStudent = async () => {
+      if (studentId && authState.user) {
+        const studentData = await getUserById(studentId);
+        setStudent(studentData);
+      }
+      setLoading(false);
+    };
+
+    if (!authState.loading) {
+      fetchStudent();
+    }
+  }, [studentId, authState]);
   
   // If we don't have a user yet, show loading
+  if (authState.loading || loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
   if (!authState.user) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
   
   const user = authState.user;
-  const student = studentId ? getUserById(studentId) : undefined;
   
   // Check if user is allowed to create log for this student
   const canCreateLog = !studentId || 
-    (user.role === "teacher" && student && student.classroomId === user.classroomId);
+    (user.role === "teacher" && student);
   
   if (!canCreateLog) {
     // Redirect if not authorized

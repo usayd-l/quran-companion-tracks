@@ -15,12 +15,16 @@ export const getUserById = async (userId: string): Promise<User | null> => {
     return null;
   }
 
+  // Get user email from auth if available
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const email = authUser?.id === data.id ? authUser.email || '' : '';
+
   return {
     id: data.id,
     name: data.name,
     role: data.role,
     profileImage: data.profile_image,
-    email: data.email || ''
+    email
   };
 };
 
@@ -47,7 +51,8 @@ export const getUsersByClassroomId = async (classroomId: string): Promise<User[]
     name: item.student.name,
     role: item.student.role,
     profileImage: item.student.profile_image,
-    classroomId
+    classroomId,
+    email: '' // Email not available in this context
   }));
 };
 
@@ -160,11 +165,33 @@ export const getLogsByUserId = async (userId: string): Promise<RecitationLog[]> 
     testerName: log.tester_name,
     notes: log.notes,
     createdAt: log.created_at,
-    mistakeCounts: log.mistake_counts
+    mistakeCounts: log.mistake_counts.map((mc: any) => ({
+      portion: mc.portion,
+      mistakes: mc.mistakes,
+      stucks: mc.stucks,
+      markedMistakes: mc.marked_mistakes
+    }))
   }));
 };
 
 export const getLogsByClassroomId = async (classroomId: string): Promise<RecitationLog[]> => {
+  // First get all student IDs in the classroom
+  const { data: members, error: membersError } = await supabase
+    .from('classroom_members')
+    .select('student_id')
+    .eq('classroom_id', classroomId);
+
+  if (membersError || !members) {
+    console.error('Error fetching classroom members:', membersError);
+    return [];
+  }
+
+  const studentIds = members.map(m => m.student_id);
+
+  if (studentIds.length === 0) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from('recitation_logs')
     .select(`
@@ -172,12 +199,7 @@ export const getLogsByClassroomId = async (classroomId: string): Promise<Recitat
       mistake_counts (*),
       user:profiles!user_id (name)
     `)
-    .in('user_id', 
-      supabase
-        .from('classroom_members')
-        .select('student_id')
-        .eq('classroom_id', classroomId)
-    )
+    .in('user_id', studentIds)
     .order('date', { ascending: false });
 
   if (error) {
@@ -199,7 +221,12 @@ export const getLogsByClassroomId = async (classroomId: string): Promise<Recitat
     testerName: log.tester_name,
     notes: log.notes,
     createdAt: log.created_at,
-    mistakeCounts: log.mistake_counts,
+    mistakeCounts: log.mistake_counts.map((mc: any) => ({
+      portion: mc.portion,
+      mistakes: mc.mistakes,
+      stucks: mc.stucks,
+      markedMistakes: mc.marked_mistakes
+    })),
     userName: log.user?.name
   }));
 };
@@ -233,7 +260,12 @@ export const getLogById = async (logId: string): Promise<RecitationLog | null> =
     testerName: data.tester_name,
     notes: data.notes,
     createdAt: data.created_at,
-    mistakeCounts: data.mistake_counts
+    mistakeCounts: data.mistake_counts.map((mc: any) => ({
+      portion: mc.portion,
+      mistakes: mc.mistakes,
+      stucks: mc.stucks,
+      markedMistakes: mc.marked_mistakes
+    }))
   };
 };
 
@@ -331,7 +363,12 @@ export const getLogsByDate = async (userId: string, date: string): Promise<Recit
     testerName: log.tester_name,
     notes: log.notes,
     createdAt: log.created_at,
-    mistakeCounts: log.mistake_counts
+    mistakeCounts: log.mistake_counts.map((mc: any) => ({
+      portion: mc.portion,
+      mistakes: mc.mistakes,
+      stucks: mc.stucks,
+      markedMistakes: mc.marked_mistakes
+    }))
   }));
 };
 

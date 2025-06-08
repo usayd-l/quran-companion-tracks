@@ -1,28 +1,24 @@
 
 import { User, RecitationLog, RecitationType } from "../types";
 
-// This file contains initial mock data for seeding the localStorage database
-// All data operations should now use the services/localStorage.ts module instead
+// This file contains initial mock data - now deprecated since we use Supabase
+// All data operations should use the services/supabaseService.ts module instead
 
 export const mockUsers: User[] = [
   {
     id: "1",
     name: "Ahmad Ali",
     role: "student",
-    teacherId: "3", // Legacy field
-    classroomId: "class1", // New field
+    classroomId: "class1",
     email: "ahmad@example.com",
-    password: "password123",
     profileImage: "https://ui-avatars.com/api/?name=Ahmad+Ali&background=E9F0E6&color=4A6741"
   },
   {
     id: "2",
     name: "Fatima Hassan",
     role: "student",
-    teacherId: "3", // Legacy field
-    classroomId: "class1", // New field
+    classroomId: "class1",
     email: "fatima@example.com",
-    password: "password123",
     profileImage: "https://ui-avatars.com/api/?name=Fatima+Hassan&background=E9F0E6&color=4A6741"
   },
   {
@@ -30,7 +26,6 @@ export const mockUsers: User[] = [
     name: "Yusuf Khan",
     role: "teacher",
     email: "yusuf@example.com",
-    password: "password123",
     profileImage: "https://ui-avatars.com/api/?name=Yusuf+Khan&background=D3B88C&color=2D2A26"
   },
   {
@@ -38,7 +33,6 @@ export const mockUsers: User[] = [
     name: "Aisha Mohammad",
     role: "student",
     email: "aisha@example.com",
-    password: "password123", 
     profileImage: "https://ui-avatars.com/api/?name=Aisha+Mohammad&background=E9F0E6&color=4A6741"
   }
 ];
@@ -131,4 +125,4 @@ export const mockLogs: RecitationLog[] = [
 ];
 
 // This file now only exports the initial mock data
-// All data operations are handled through the localStorage service
+// All data operations are handled through the supabase service
