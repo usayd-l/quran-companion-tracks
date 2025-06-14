@@ -13,6 +13,7 @@ export interface User {
   role: UserRole;
   profileImage?: string;
   classroomId?: string;
+  classroomName?: string;
   email?: string;
 }
 
