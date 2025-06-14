@@ -1,15 +1,13 @@
 
 import React, { useState, useEffect } from "react";
-import { User, RecitationLog } from "@/types";
+import { User, RecitationLog, RecitationType } from "@/types";
 import { Button } from "@/components/ui/button";
 import LogEntry from "./LogEntry";
 import { Link, useNavigate } from "react-router-dom";
 import { BarChart, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AnalyticsDashboard from "./analytics/AnalyticsDashboard";
 import FloatingActionButton from "./FloatingActionButton";
-import { getLogs } from "@/services/localStorage";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Popover,
@@ -17,6 +15,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
+import LogsFilter from "./LogsFilter";
+import EnhancedAnalyticsDashboard from "./analytics/EnhancedAnalyticsDashboard";
 
 interface DashboardProps {
   user: User;
@@ -33,24 +33,38 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"logs" | "analytics">("logs");
-  const [logs, setLogs] = useState<RecitationLog[]>(initialLogs);
+  const [logs, setLogs] = useState<RecitationLog[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [selectedTypes, setSelectedTypes] = useState<RecitationType[]>([]);
   
-  // Re-fetch logs when refreshTrigger changes or when initialLogs change
+  // Sort logs by date and creation time (newest first)
   useEffect(() => {
-    setLogs(initialLogs);
+    const sortedLogs = [...initialLogs].sort((a, b) => {
+      const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateComparison === 0) {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      return dateComparison;
+    });
+    setLogs(sortedLogs);
   }, [initialLogs, refreshTrigger]);
   
-  // Filter logs by selected date if date is selected, otherwise show recent logs
-  const displayLogs = selectedDate 
-    ? logs.filter(log => {
-        const logDate = new Date(log.date);
-        return logDate.toDateString() === selectedDate.toDateString();
-      })
-    : [...logs].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-      ).slice(0, 5);
+  // Filter logs by selected date and type
+  const filteredLogs = logs.filter(log => {
+    const dateMatch = selectedDate 
+      ? new Date(log.date).toDateString() === selectedDate.toDateString()
+      : true;
+    
+    const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(log.recitationType);
+    
+    return dateMatch && typeMatch;
+  });
+
+  // Get recent logs (top 5 if no filters applied)
+  const displayLogs = selectedDate || selectedTypes.length > 0 
+    ? filteredLogs 
+    : filteredLogs.slice(0, 5);
 
   const handleCreateLog = () => {
     navigate("/create-log");
@@ -64,6 +78,16 @@ const Dashboard: React.FC<DashboardProps> = ({
   const clearDateFilter = () => {
     setSelectedDate(undefined);
   };
+
+  const handleFilterChange = (types: RecitationType[]) => {
+    setSelectedTypes(types);
+  };
+
+  const handleViewAllLogs = () => {
+    navigate("/all-logs");
+  };
+
+  const hasFilters = selectedDate || selectedTypes.length > 0;
 
   return (
     <div className="space-y-6 relative pb-20">
@@ -85,33 +109,40 @@ const Dashboard: React.FC<DashboardProps> = ({
         
         <TabsContent value="logs">
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-start">
               <h2 className="text-xl font-semibold">
-                {selectedDate ? `Logs for ${format(selectedDate, "PPP")}` : "Recent Activity"}
+                {hasFilters ? "Filtered Logs" : "Recent Activity"}
               </h2>
-              <div className="flex gap-2">
-                <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      {selectedDate ? format(selectedDate, "MMM dd") : "Pick Date"}
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        {selectedDate ? format(selectedDate, "MMM dd") : "Pick Date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <CalendarComponent
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={handleDateSelect}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {selectedDate && (
+                    <Button variant="ghost" size="sm" onClick={clearDateFilter}>
+                      Clear Date
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
-                    <CalendarComponent
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={handleDateSelect}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-                {selectedDate && (
-                  <Button variant="ghost" size="sm" onClick={clearDateFilter}>
-                    Show All
-                  </Button>
-                )}
+                  )}
+                </div>
+                
+                <LogsFilter 
+                  selectedTypes={selectedTypes}
+                  onFilterChange={handleFilterChange}
+                />
               </div>
             </div>
             
@@ -119,17 +150,31 @@ const Dashboard: React.FC<DashboardProps> = ({
               <Card>
                 <CardHeader>
                   <CardTitle className="text-center text-lg">
-                    {selectedDate ? "No logs for this date" : "No logs yet"}
+                    {hasFilters ? "No logs match your filters" : "No logs yet"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center pb-6">
                   <p className="text-muted-foreground mb-4">
-                    {selectedDate 
-                      ? "No recitation logs were recorded for this date."
+                    {hasFilters 
+                      ? "Try adjusting your filter criteria to see more logs."
                       : user.role === "student" 
                         ? "Start tracking your Quran memorization journey by creating your first log." 
                         : "Your students haven't recorded any logs yet."}
                   </p>
+                  {hasFilters && (
+                    <div className="flex gap-2 justify-center">
+                      {selectedDate && (
+                        <Button variant="outline" size="sm" onClick={clearDateFilter}>
+                          Clear Date
+                        </Button>
+                      )}
+                      {selectedTypes.length > 0 && (
+                        <Button variant="outline" size="sm" onClick={() => setSelectedTypes([])}>
+                          Clear Filters
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ) : (
@@ -142,10 +187,14 @@ const Dashboard: React.FC<DashboardProps> = ({
                   />
                 ))}
                 
-                {!selectedDate && logs.length > 5 && (
+                {!hasFilters && logs.length > 5 && (
                   <div className="text-center mt-4">
-                    <Button variant="outline" className="border-primary text-primary hover:bg-primary-light">
-                      View All Logs
+                    <Button 
+                      variant="outline" 
+                      className="border-primary text-primary hover:bg-primary-light"
+                      onClick={handleViewAllLogs}
+                    >
+                      View All Logs ({logs.length})
                     </Button>
                   </div>
                 )}
@@ -160,7 +209,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <p className="text-sm text-muted-foreground">Track your progress and identify patterns</p>
           </div>
           
-          <AnalyticsDashboard logs={logs} />
+          <EnhancedAnalyticsDashboard logs={logs} />
         </TabsContent>
       </Tabs>
 

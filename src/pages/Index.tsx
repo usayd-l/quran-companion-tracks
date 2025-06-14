@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Classroom } from "@/types";
+import { User, Classroom, RecitationLog } from "@/types";
 import Dashboard from "@/components/ui/Dashboard";
 import UserProfile from "@/components/ui/UserProfile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,9 +14,9 @@ import StudentsPanel from "@/components/ui/classroom/StudentsPanel";
 import {
   getUsersByClassroomId,
   getClassroomsByTeacherId,
-  getLogs,
-  getUserById
-} from "@/services/localStorage";
+  getLogsByUserId,
+  getLogsByClassroomId
+} from "@/services/supabaseService";
 
 const Index = () => {
   const { authState } = useAuth();
@@ -25,6 +25,7 @@ const Index = () => {
   const [selectedClassroomId, setSelectedClassroomId] = useState<string | undefined>(undefined);
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [students, setStudents] = useState<User[]>([]);
+  const [logs, setLogs] = useState<RecitationLog[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // If not authenticated, redirect to login
@@ -44,37 +45,54 @@ const Index = () => {
   
   // Get classrooms if the user is a teacher
   useEffect(() => {
-    if (user.role === "teacher") {
-      const teacherClassrooms = getClassroomsByTeacherId(user.id);
-      setClassrooms(teacherClassrooms);
-      
-      // Select the first classroom by default if none is selected
-      if (teacherClassrooms.length > 0 && !selectedClassroomId) {
-        setSelectedClassroomId(teacherClassrooms[0].id);
+    const fetchClassrooms = async () => {
+      if (user.role === "teacher") {
+        const teacherClassrooms = await getClassroomsByTeacherId(user.id);
+        setClassrooms(teacherClassrooms);
+        
+        // Select the first classroom by default if none is selected
+        if (teacherClassrooms.length > 0 && !selectedClassroomId) {
+          setSelectedClassroomId(teacherClassrooms[0].id);
+        }
       }
-    } else if (user.role === "student" && user.classroomId) {
-      // If student, set students to empty array
-      setStudents([]);
-    }
+    };
+
+    fetchClassrooms();
   }, [user.id, user.role, refreshTrigger]);
   
   // When a classroom is selected, get its students
   useEffect(() => {
-    if (selectedClassroomId) {
-      const classroomStudents = getUsersByClassroomId(selectedClassroomId);
-      setStudents(classroomStudents);
-    }
+    const fetchStudents = async () => {
+      if (selectedClassroomId) {
+        const classroomStudents = await getUsersByClassroomId(selectedClassroomId);
+        setStudents(classroomStudents);
+      }
+    };
+
+    fetchStudents();
   }, [selectedClassroomId, refreshTrigger]);
-  
-  // Get logs based on the user's role
-  const userLogs = user.role === "student" 
-    ? getLogs().filter(log => log.userId === user.id)
-    : selectedClassroomId 
-      ? getLogs().filter(log => {
-          const logUser = getUserById(log.userId);
-          return logUser && logUser.classroomId === selectedClassroomId;
-        })
-      : [];
+
+  // Fetch logs based on user role
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        let userLogs: RecitationLog[] = [];
+        
+        if (user.role === "student") {
+          userLogs = await getLogsByUserId(user.id);
+        } else if (user.role === "teacher" && selectedClassroomId) {
+          userLogs = await getLogsByClassroomId(selectedClassroomId);
+        }
+        
+        setLogs(userLogs);
+      } catch (error) {
+        console.error("Error fetching logs:", error);
+        setLogs([]);
+      }
+    };
+
+    fetchLogs();
+  }, [user.role, user.id, selectedClassroomId, refreshTrigger]);
     
   // Handle creating a log for a specific student
   const handleCreateLog = (studentId: string) => {
@@ -122,7 +140,7 @@ const Index = () => {
           <TabsContent value="dashboard">
             <Dashboard
               user={user}
-              logs={userLogs}
+              logs={logs}
               showStudentNames={true}
               refreshTrigger={refreshTrigger}
             />
@@ -167,7 +185,7 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       ) : (
-        <Dashboard user={user} logs={userLogs} refreshTrigger={refreshTrigger} />
+        <Dashboard user={user} logs={logs} refreshTrigger={refreshTrigger} />
       )}
     </div>
   );

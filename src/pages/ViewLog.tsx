@@ -1,27 +1,82 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getLogById, getUserById } from "@/services/localStorage";
+import { getLogById, getUserById } from "@/services/supabaseService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import UserProfile from "@/components/ui/UserProfile";
 import { Badge } from "@/components/ui/badge";
+import { RecitationLog, User } from "@/types";
 
 const ViewLog = () => {
   const { logId } = useParams<{ logId: string }>();
   const navigate = useNavigate();
   
-  const log = logId ? getLogById(logId) : undefined;
-  const student = log ? getUserById(log.userId) : undefined;
+  const [log, setLog] = useState<RecitationLog | null>(null);
+  const [student, setStudent] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  if (!log || !student) {
+  useEffect(() => {
+    const fetchLogData = async () => {
+      if (!logId) {
+        setError("No log ID provided");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const logData = await getLogById(logId);
+        
+        if (!logData) {
+          setError("Log not found");
+          setLoading(false);
+          return;
+        }
+
+        setLog(logData);
+        
+        const userData = await getUserById(logData.userId);
+        if (!userData) {
+          setError("Student not found");
+          setLoading(false);
+          return;
+        }
+        
+        setStudent(userData);
+      } catch (err) {
+        console.error("Error fetching log data:", err);
+        setError("Failed to load log data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLogData();
+  }, [logId]);
+  
+  if (loading) {
+    return (
+      <div className="container max-w-md mx-auto px-4 py-6">
+        <div className="text-center p-6">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading log...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error || !log || !student) {
     return (
       <div className="container max-w-md mx-auto px-4 py-6">
         <div className="text-center p-6">
           <h1 className="text-xl font-bold mb-4">Log Not Found</h1>
-          <p className="mb-4 text-muted-foreground">The requested log entry could not be found.</p>
+          <p className="mb-4 text-muted-foreground">
+            {error || "The requested log entry could not be found."}
+          </p>
           <Button onClick={() => navigate("/")}>Go Home</Button>
         </div>
       </div>
@@ -35,6 +90,18 @@ const ViewLog = () => {
   const recitationContent = log.surahName 
     ? `${log.surahName} (Ayah ${log.ayahStart} to ${log.ayahEnd})`
     : `Juz ${log.juzNumber} (Pages ${log.pageStart} to ${log.pageEnd})`;
+
+  // Get grade color
+  const getGradeColor = (grade?: string) => {
+    switch (grade) {
+      case 'Excellent': return 'bg-green-100 text-green-800 border-green-300';
+      case 'Very Good': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'Good': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'Average': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'Failed': return 'bg-red-100 text-red-800 border-red-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
     
   return (
     <div className="container max-w-md mx-auto px-4 py-6 pattern-bg">
@@ -77,6 +144,23 @@ const ViewLog = () => {
             <p className="text-sm text-muted-foreground">Tester</p>
             <p className="font-medium">{log.testerName}</p>
           </div>
+
+          {log.grade && (
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Grade</p>
+              <Badge variant="outline" className={getGradeColor(log.grade)}>
+                {log.grade}
+              </Badge>
+            </div>
+          )}
+
+          {log.needsRepeat && (
+            <div>
+              <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-300">
+                Needs Repeat
+              </Badge>
+            </div>
+          )}
         </CardContent>
       </Card>
       
