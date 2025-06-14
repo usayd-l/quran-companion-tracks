@@ -9,16 +9,19 @@ import { LogOut } from "lucide-react";
 const Header = () => {
   const { authState, isDemoMode, logout } = useAuth();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (isDemoMode) {
       const confirmLogout = window.confirm(
         "Are you sure you want to exit demo mode? All demo records will be deleted."
       );
       if (confirmLogout) {
-        logout();
+        // Clear demo data and logout
+        localStorage.clear();
+        await logout();
+        window.location.href = "/login";
       }
     } else {
-      logout();
+      await logout();
     }
   };
 

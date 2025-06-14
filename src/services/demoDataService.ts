@@ -9,7 +9,18 @@ export const demoClassroom: Classroom = {
   classCode: "DEMO123"
 };
 
-// Demo students for the classroom
+// Additional demo classrooms
+export const demoClassrooms: Classroom[] = [
+  demoClassroom,
+  {
+    id: "demo-classroom-2",
+    name: "Advanced Hifz Class",
+    teacherId: "demo-teacher-id",
+    classCode: "ADV456"
+  }
+];
+
+// Expanded demo students for the classrooms
 export const demoStudents = [
   {
     id: "demo-student-1",
@@ -26,64 +37,136 @@ export const demoStudents = [
     email: "fatima@demo.com",
     profileImage: "https://ui-avatars.com/api/?name=Fatima+Hassan&background=E9F0E6&color=4A6741",
     classroomId: "demo-classroom-id"
+  },
+  {
+    id: "demo-student-3",
+    name: "Omar Ibrahim",
+    role: "student" as const,
+    email: "omar@demo.com",
+    profileImage: "https://ui-avatars.com/api/?name=Omar+Ibrahim&background=E9F0E6&color=4A6741",
+    classroomId: "demo-classroom-id"
+  },
+  {
+    id: "demo-student-4",
+    name: "Aisha Rahman",
+    role: "student" as const,
+    email: "aisha@demo.com",
+    profileImage: "https://ui-avatars.com/api/?name=Aisha+Rahman&background=E9F0E6&color=4A6741",
+    classroomId: "demo-classroom-id"
+  },
+  {
+    id: "demo-student-5",
+    name: "Yusuf Ahmed",
+    role: "student" as const,
+    email: "yusuf@demo.com",
+    profileImage: "https://ui-avatars.com/api/?name=Yusuf+Ahmed&background=E9F0E6&color=4A6741",
+    classroomId: "demo-classroom-id"
+  },
+  {
+    id: "demo-student-6",
+    name: "Mariam Khan",
+    role: "student" as const,
+    email: "mariam@demo.com",
+    profileImage: "https://ui-avatars.com/api/?name=Mariam+Khan&background=E9F0E6&color=4A6741",
+    classroomId: "demo-classroom-2"
+  },
+  {
+    id: "demo-student-7",
+    name: "Hassan Mohamed",
+    role: "student" as const,
+    email: "hassan@demo.com",
+    profileImage: "https://ui-avatars.com/api/?name=Hassan+Mohamed&background=E9F0E6&color=4A6741",
+    classroomId: "demo-classroom-2"
   }
 ];
 
-// Demo recitation logs
-export const demoLogs: RecitationLog[] = [
-  {
-    id: "demo-log-1",
-    userId: "demo-student-1",
-    date: "2023-12-07",
-    recitationType: "Sabaq",
-    surahName: "Al-Baqarah",
-    ayahStart: 1,
-    ayahEnd: 5,
-    mistakeCounts: [
-      {
-        portion: "Full",
-        mistakes: 2,
-        stucks: 1,
-        markedMistakes: 0
+// Generate realistic demo logs with varied data
+const generateDemoLogs = (): RecitationLog[] => {
+  const surahs = ["Al-Baqarah", "Al-Imran", "An-Nisa", "Al-Maidah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah"];
+  const grades = ["Excellent", "Very Good", "Good", "Average", "Failed"];
+  const recitationTypes = ["Sabaq", "Last 3 Sabaqs", "Sabaq Dhor", "Dhor"];
+  
+  const logs: RecitationLog[] = [];
+  
+  // Generate logs for each student with varied performance
+  demoStudents.forEach((student, studentIndex) => {
+    for (let i = 0; i < 15; i++) {
+      const daysAgo = Math.floor(Math.random() * 30);
+      const date = new Date();
+      date.setDate(date.getDate() - daysAgo);
+      
+      const recitationType = recitationTypes[Math.floor(Math.random() * recitationTypes.length)];
+      const isJuzBased = recitationType === "Dhor" || recitationType === "Sabaq Dhor";
+      
+      // Vary mistake counts based on student performance level
+      const performanceLevel = studentIndex % 3; // 0: excellent, 1: good, 2: needs improvement
+      let baseMistakes, baseStucks;
+      
+      switch (performanceLevel) {
+        case 0: // Excellent student
+          baseMistakes = Math.floor(Math.random() * 3);
+          baseStucks = Math.floor(Math.random() * 2);
+          break;
+        case 1: // Good student
+          baseMistakes = Math.floor(Math.random() * 6) + 1;
+          baseStucks = Math.floor(Math.random() * 3) + 1;
+          break;
+        case 2: // Needs improvement
+          baseMistakes = Math.floor(Math.random() * 10) + 3;
+          baseStucks = Math.floor(Math.random() * 5) + 2;
+          break;
+        default:
+          baseMistakes = 2;
+          baseStucks = 1;
       }
-    ],
-    testerName: "Demo Teacher",
-    notes: "Good progress today",
-    grade: "Good",
-    needsRepeat: false,
-    createdAt: new Date().toISOString(),
-    userName: "Ahmad Ali"
-  },
-  {
-    id: "demo-log-2",
-    userId: "demo-student-2", 
-    date: "2023-12-07",
-    recitationType: "Dhor",
-    juzNumber: 2,
-    pageStart: 21,
-    pageEnd: 25,
-    mistakeCounts: [
-      {
-        portion: "Quarter",
-        mistakes: 1,
-        stucks: 0,
-        markedMistakes: 0
-      },
-      {
-        portion: "Quarter", 
-        mistakes: 2,
-        stucks: 0,
-        markedMistakes: 0
+      
+      const log: RecitationLog = {
+        id: `demo-log-${student.id}-${i}`,
+        userId: student.id,
+        date: date.toISOString().split('T')[0],
+        recitationType: recitationType as any,
+        mistakeCounts: [
+          {
+            portion: "Full",
+            mistakes: baseMistakes,
+            stucks: baseStucks,
+            markedMistakes: Math.floor(Math.random() * 2)
+          }
+        ],
+        testerName: "Demo Teacher",
+        notes: i % 4 === 0 ? [
+          "Good progress today", 
+          "Needs more practice with Tajweed",
+          "Excellent memorization",
+          "Focus on pronunciation",
+          "Keep up the good work"
+        ][Math.floor(Math.random() * 5)] : undefined,
+        grade: grades[performanceLevel],
+        needsRepeat: baseMistakes > 5,
+        createdAt: date.toISOString(),
+        userName: student.name
+      };
+      
+      // Add specific content based on recitation type
+      if (isJuzBased) {
+        log.juzNumber = Math.floor(Math.random() * 30) + 1;
+        log.pageStart = Math.floor(Math.random() * 15) + 1;
+        log.pageEnd = log.pageStart + Math.floor(Math.random() * 5) + 1;
+      } else {
+        log.surahName = surahs[Math.floor(Math.random() * surahs.length)];
+        log.ayahStart = Math.floor(Math.random() * 10) + 1;
+        log.ayahEnd = log.ayahStart + Math.floor(Math.random() * 20) + 5;
       }
-    ],
-    testerName: "Demo Teacher",
-    notes: "Needs to review more carefully",
-    grade: "Average",
-    needsRepeat: true,
-    createdAt: new Date().toISOString(),
-    userName: "Fatima Hassan"
-  }
-];
+      
+      logs.push(log);
+    }
+  });
+  
+  return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
+
+// Generate the demo logs
+export const demoLogs = generateDemoLogs();
 
 // Demo service functions that mimic the Supabase service API
 export const demoDataService = {
@@ -101,15 +184,12 @@ export const demoDataService = {
   },
 
   getUsersByClassroomId: async (classroomId: string) => {
-    if (classroomId === "demo-classroom-id") {
-      return demoStudents;
-    }
-    return [];
+    return demoStudents.filter(student => student.classroomId === classroomId);
   },
 
   getClassroomsByTeacherId: async (teacherId: string) => {
     if (teacherId === "demo-teacher-id") {
-      return [demoClassroom];
+      return demoClassrooms;
     }
     return [];
   },
@@ -119,18 +199,24 @@ export const demoDataService = {
   },
 
   getLogsByClassroomId: async (classroomId: string) => {
-    if (classroomId === "demo-classroom-id") {
-      return demoLogs;
-    }
-    return [];
+    const classroomStudentIds = demoStudents
+      .filter(student => student.classroomId === classroomId)
+      .map(student => student.id);
+    return demoLogs.filter(log => classroomStudentIds.includes(log.userId));
+  },
+
+  getLogById: async (logId: string) => {
+    return demoLogs.find(log => log.id === logId) || null;
   },
 
   saveLog: async (log: any) => {
     // In demo mode, just return the log with a generated ID
-    return {
+    const newLog = {
       ...log,
       id: `demo-log-${Date.now()}`,
       createdAt: new Date().toISOString()
     };
+    demoLogs.unshift(newLog); // Add to beginning for newest first
+    return newLog;
   }
 };

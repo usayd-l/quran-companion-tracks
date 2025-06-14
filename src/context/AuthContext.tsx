@@ -181,6 +181,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isDemoMode) {
       localStorage.removeItem('demoUser');
       setIsDemoMode(false);
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+        loading: false,
+      });
     } else {
       await supabase.auth.signOut();
     }
