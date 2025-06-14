@@ -90,8 +90,9 @@ const generateDemoLogs = (): RecitationLog[] => {
   
   // Generate logs for each student with varied performance
   demoStudents.forEach((student, studentIndex) => {
-    for (let i = 0; i < 15; i++) {
-      const daysAgo = Math.floor(Math.random() * 30);
+    // Generate more logs for each student (20 instead of 15)
+    for (let i = 0; i < 20; i++) {
+      const daysAgo = Math.floor(Math.random() * 45); // Spread over 45 days
       const date = new Date();
       date.setDate(date.getDate() - daysAgo);
       

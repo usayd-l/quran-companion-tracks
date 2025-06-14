@@ -14,6 +14,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format } from "date-fns";
 import LogsFilter from "./LogsFilter";
 import EnhancedAnalyticsDashboard from "./analytics/EnhancedAnalyticsDashboard";
@@ -21,6 +28,7 @@ import EnhancedAnalyticsDashboard from "./analytics/EnhancedAnalyticsDashboard";
 interface DashboardProps {
   user: User;
   logs: RecitationLog[];
+  students?: User[];
   showStudentNames?: boolean;
   refreshTrigger?: number;
 }
@@ -28,6 +36,7 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ 
   user, 
   logs: initialLogs,
+  students = [],
   showStudentNames = false,
   refreshTrigger = 0
 }) => {
@@ -35,8 +44,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [activeTab, setActiveTab] = useState<"logs" | "analytics">("logs");
   const [logs, setLogs] = useState<RecitationLog[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState<RecitationType[]>([]);
+  const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   
   // Sort logs by date and creation time (newest first)
   useEffect(() => {
@@ -50,19 +59,19 @@ const Dashboard: React.FC<DashboardProps> = ({
     setLogs(sortedLogs);
   }, [initialLogs, refreshTrigger]);
   
-  // Filter logs by selected date and type
+  // Filter logs by selected student, date and type
   const filteredLogs = logs.filter(log => {
+    const studentMatch = selectedStudentId ? log.userId === selectedStudentId : true;
     const dateMatch = selectedDate 
       ? new Date(log.date).toDateString() === selectedDate.toDateString()
       : true;
-    
     const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(log.recitationType);
     
-    return dateMatch && typeMatch;
+    return studentMatch && dateMatch && typeMatch;
   });
 
   // Get recent logs (top 5 if no filters applied)
-  const displayLogs = selectedDate || selectedTypes.length > 0 
+  const displayLogs = selectedDate || selectedTypes.length > 0 || selectedStudentId
     ? filteredLogs 
     : filteredLogs.slice(0, 5);
 
@@ -72,7 +81,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
-    setIsDatePickerOpen(false);
   };
 
   const clearDateFilter = () => {
@@ -91,10 +99,30 @@ const Dashboard: React.FC<DashboardProps> = ({
     navigate("/all-logs");
   };
 
-  const hasFilters = selectedDate || selectedTypes.length > 0;
+  const hasFilters = selectedDate || selectedTypes.length > 0 || selectedStudentId;
+  const selectedStudent = students.find(s => s.id === selectedStudentId);
 
   return (
     <div className="space-y-6 relative pb-20">
+      {/* Student Selection Dropdown for Teachers */}
+      {user.role === "teacher" && students.length > 0 && (
+        <div className="mb-4">
+          <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a student to view their data" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Students</SelectItem>
+              {students.map((student) => (
+                <SelectItem key={student.id} value={student.id}>
+                  {student.name} ({student.classroomName || "No Classroom"})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <Tabs 
         defaultValue="logs" 
         value={activeTab} 
@@ -115,33 +143,39 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="space-y-4">
             <div className="flex justify-between items-start">
               <h2 className="text-xl font-semibold">
-                {hasFilters ? "Filtered Logs" : "Recent Activity"}
+                {selectedStudent 
+                  ? `${selectedStudent.name}'s Logs`
+                  : hasFilters 
+                    ? "Filtered Logs" 
+                    : "Recent Activity"}
               </h2>
               <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                  <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {selectedDate ? format(selectedDate, "MMM dd") : "Pick Date"}
+                {user.role === "student" && (
+                  <div className="flex gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          {selectedDate ? format(selectedDate, "MMM dd") : "Pick Date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="end">
+                        <CalendarComponent
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={handleDateSelect}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    {selectedDate && (
+                      <Button variant="ghost" size="sm" onClick={clearDateFilter}>
+                        Clear Date
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="end">
-                      <CalendarComponent
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={handleDateSelect}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {selectedDate && (
-                    <Button variant="ghost" size="sm" onClick={clearDateFilter}>
-                      Clear Date
-                    </Button>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
                 
                 <LogsFilter 
                   selectedTypes={selectedTypes}
@@ -152,7 +186,19 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
             
-            {displayLogs.length === 0 ? (
+            {/* Show empty state if teacher hasn't selected a student */}
+            {user.role === "teacher" && !selectedStudentId ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-center text-lg">Select a Student</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center pb-6">
+                  <p className="text-muted-foreground">
+                    Please select a student from the dropdown above to view their logs and analytics.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : displayLogs.length === 0 ? (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-center text-lg">
@@ -165,7 +211,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       ? "Try adjusting your filter criteria to see more logs."
                       : user.role === "student" 
                         ? "Start tracking your Quran memorization journey by creating your first log." 
-                        : "Your students haven't recorded any logs yet."}
+                        : "This student hasn't recorded any logs yet."}
                   </p>
                   {hasFilters && (
                     <div className="flex gap-2 justify-center">
@@ -189,7 +235,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <LogEntry 
                     key={log.id} 
                     log={log} 
-                    showStudent={showStudentNames}
+                    showStudent={showStudentNames && !selectedStudentId}
                   />
                 ))}
                 
@@ -200,7 +246,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       className="border-primary text-primary hover:bg-primary-light"
                       onClick={handleViewAllLogs}
                     >
-                      View All Logs ({logs.length})
+                      View All Logs ({filteredLogs.length})
                     </Button>
                   </div>
                 )}
@@ -211,11 +257,26 @@ const Dashboard: React.FC<DashboardProps> = ({
         
         <TabsContent value="analytics">
           <div className="mb-4">
-            <h2 className="text-xl font-semibold">Analytics</h2>
-            <p className="text-sm text-muted-foreground">Track your progress and identify patterns</p>
+            <h2 className="text-xl font-semibold">
+              {selectedStudent ? `${selectedStudent.name}'s Analytics` : "Analytics"}
+            </h2>
+            <p className="text-sm text-muted-foreground">Track progress and identify patterns</p>
           </div>
           
-          <EnhancedAnalyticsDashboard logs={logs} />
+          {user.role === "teacher" && !selectedStudentId ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-center text-lg">Select a Student</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center pb-6">
+                <p className="text-muted-foreground">
+                  Please select a student from the dropdown above to view their analytics.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <EnhancedAnalyticsDashboard logs={filteredLogs} />
+          )}
         </TabsContent>
       </Tabs>
 

@@ -18,6 +18,7 @@ interface LogsFilterProps {
   selectedDate?: Date;
   onFilterChange: (types: RecitationType[]) => void;
   onDateChange: (date?: Date) => void;
+  showDatePicker?: boolean;
 }
 
 const recitationTypes: RecitationType[] = ['Sabaq', 'Last 3 Sabaqs', 'Sabaq Dhor', 'Dhor'];
@@ -26,7 +27,8 @@ const LogsFilter: React.FC<LogsFilterProps> = ({
   selectedTypes, 
   selectedDate,
   onFilterChange, 
-  onDateChange 
+  onDateChange,
+  showDatePicker = true
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDateOpen, setIsDateOpen] = useState(false);
@@ -41,10 +43,12 @@ const LogsFilter: React.FC<LogsFilterProps> = ({
 
   const clearFilters = () => {
     onFilterChange([]);
-    onDateChange(undefined);
+    if (showDatePicker) {
+      onDateChange(undefined);
+    }
   };
 
-  const hasFilters = selectedTypes.length > 0 || selectedDate;
+  const hasFilters = selectedTypes.length > 0 || (showDatePicker && selectedDate);
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -96,33 +100,35 @@ const LogsFilter: React.FC<LogsFilterProps> = ({
         </PopoverContent>
       </Popover>
 
-      <Popover open={isDateOpen} onOpenChange={setIsDateOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className={cn(
-              "justify-start text-left font-normal",
-              !selectedDate && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="h-4 w-4 mr-2" />
-            {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Select Date"}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={(date) => {
-              onDateChange(date);
-              setIsDateOpen(false);
-            }}
-            initialFocus
-            className="pointer-events-auto"
-          />
-        </PopoverContent>
-      </Popover>
+      {showDatePicker && (
+        <Popover open={isDateOpen} onOpenChange={setIsDateOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "justify-start text-left font-normal",
+                !selectedDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Select Date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => {
+                onDateChange(date);
+                setIsDateOpen(false);
+              }}
+              initialFocus
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+      )}
       
       {hasFilters && (
         <Button
@@ -151,7 +157,7 @@ const LogsFilter: React.FC<LogsFilterProps> = ({
         </div>
       )}
 
-      {selectedDate && (
+      {showDatePicker && selectedDate && (
         <Badge
           variant="secondary"
           className="text-xs cursor-pointer hover:bg-secondary/80"

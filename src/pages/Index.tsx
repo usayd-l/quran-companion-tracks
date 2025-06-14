@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, Classroom, RecitationLog } from "@/types";
@@ -36,6 +35,11 @@ const Index = () => {
   }, [authState, navigate]);
   
   // If we don't have a user yet, show a loading state
+  if (!authState.loading && !authState.isAuthenticated) {
+    navigate("/login");
+  }
+
+  // If we don't have a user yet, show a loading state
   if (!authState.user) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
@@ -65,12 +69,17 @@ const Index = () => {
     const fetchStudents = async () => {
       if (selectedClassroomId) {
         const classroomStudents = await getUsersByClassroomId(selectedClassroomId);
-        setStudents(classroomStudents);
+        // Add classroom name to each student for display
+        const studentsWithClassroom = classroomStudents.map(student => ({
+          ...student,
+          classroomName: classrooms.find(c => c.id === selectedClassroomId)?.name
+        }));
+        setStudents(studentsWithClassroom);
       }
     };
 
     fetchStudents();
-  }, [selectedClassroomId, refreshTrigger]);
+  }, [selectedClassroomId, refreshTrigger, classrooms]);
 
   // Fetch logs based on user role
   useEffect(() => {
@@ -141,6 +150,7 @@ const Index = () => {
             <Dashboard
               user={user}
               logs={logs}
+              students={students}
               showStudentNames={true}
               refreshTrigger={refreshTrigger}
             />
