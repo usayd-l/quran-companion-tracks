@@ -83,7 +83,6 @@ export const demoStudents = [
 // Generate realistic demo logs with varied data
 const generateDemoLogs = (): RecitationLog[] => {
   const surahs = ["Al-Baqarah", "Al-Imran", "An-Nisa", "Al-Maidah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah"];
-  const grades = ["Excellent", "Very Good", "Good", "Average", "Failed"];
   const recitationTypes = ["Sabaq", "Last 3 Sabaqs", "Sabaq Dhor", "Dhor"];
   
   const logs: RecitationLog[] = [];
@@ -141,7 +140,6 @@ const generateDemoLogs = (): RecitationLog[] => {
           "Focus on pronunciation",
           "Keep up the good work"
         ][Math.floor(Math.random() * 5)] : undefined,
-        grade: grades[performanceLevel],
         needsRepeat: baseMistakes > 5,
         createdAt: date.toISOString(),
         userName: student.name
