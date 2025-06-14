@@ -49,6 +49,8 @@ export const demoLogs: RecitationLog[] = [
     ],
     testerName: "Demo Teacher",
     notes: "Good progress today",
+    grade: "Good",
+    needsRepeat: false,
     createdAt: new Date().toISOString(),
     userName: "Ahmad Ali"
   },
@@ -76,6 +78,8 @@ export const demoLogs: RecitationLog[] = [
     ],
     testerName: "Demo Teacher",
     notes: "Needs to review more carefully",
+    grade: "Average",
+    needsRepeat: true,
     createdAt: new Date().toISOString(),
     userName: "Fatima Hassan"
   }

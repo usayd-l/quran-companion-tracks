@@ -5,6 +5,8 @@ export type RecitationType = 'Sabaq' | 'Last 3 Sabaqs' | 'Sabaq Dhor' | 'Dhor';
 
 export type MistakePortion = 'Full' | 'Half' | 'Quarter';
 
+export type Grade = 'Excellent' | 'Very Good' | 'Good' | 'Average' | 'Failed';
+
 export interface User {
   id: string;
   name: string;
@@ -42,6 +44,8 @@ export interface RecitationLog {
   mistakeCounts: MistakeCount[];
   testerName: string;
   notes?: string;
+  grade?: Grade;
+  needsRepeat?: boolean;
   createdAt: string;
   userName?: string; // For teacher views
 }

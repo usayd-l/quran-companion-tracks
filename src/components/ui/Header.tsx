@@ -3,9 +3,24 @@ import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import UserProfile from "./UserProfile";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 const Header = () => {
-  const { authState, isDemoMode } = useAuth();
+  const { authState, isDemoMode, logout } = useAuth();
+
+  const handleLogout = () => {
+    if (isDemoMode) {
+      const confirmLogout = window.confirm(
+        "Are you sure you want to exit demo mode? All demo records will be deleted."
+      );
+      if (confirmLogout) {
+        logout();
+      }
+    } else {
+      logout();
+    }
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-3 mb-6">
@@ -21,7 +36,19 @@ const Header = () => {
           )}
         </div>
         
-        {authState.user && <UserProfile user={authState.user} />}
+        <div className="flex items-center gap-3">
+          {authState.user && <UserProfile user={authState.user} />}
+          {authState.user && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
     </header>
   );

@@ -1,13 +1,21 @@
+
 import React, { useState, useEffect } from "react";
 import { User, RecitationLog } from "@/types";
 import { Button } from "@/components/ui/button";
 import LogEntry from "./LogEntry";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, BarChart } from "lucide-react";
+import { Plus, BarChart, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AnalyticsDashboard from "./analytics/AnalyticsDashboard";
 import { getLogs } from "@/services/localStorage";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
 
 interface DashboardProps {
   user: User;
@@ -25,22 +33,39 @@ const Dashboard: React.FC<DashboardProps> = ({
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"logs" | "analytics">("logs");
   const [logs, setLogs] = useState<RecitationLog[]>(initialLogs);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   
   // Re-fetch logs when refreshTrigger changes or when initialLogs change
   useEffect(() => {
     setLogs(initialLogs);
   }, [initialLogs, refreshTrigger]);
   
-  const recentLogs = [...logs].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  ).slice(0, 5);
+  // Filter logs by selected date if date is selected, otherwise show recent logs
+  const displayLogs = selectedDate 
+    ? logs.filter(log => {
+        const logDate = new Date(log.date);
+        return logDate.toDateString() === selectedDate.toDateString();
+      })
+    : [...logs].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      ).slice(0, 5);
 
   const handleCreateLog = () => {
     navigate("/create-log");
   };
 
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    setIsDatePickerOpen(false);
+  };
+
+  const clearDateFilter = () => {
+    setSelectedDate(undefined);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       <Tabs 
         defaultValue="logs" 
         value={activeTab} 
@@ -58,59 +83,82 @@ const Dashboard: React.FC<DashboardProps> = ({
         </TabsList>
         
         <TabsContent value="logs">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Recent Activity</h2>
-            {user.role === "student" && (
-              <Button 
-                className="bg-primary hover:bg-primary/90"
-                onClick={handleCreateLog}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Log
-              </Button>
-            )}
-          </div>
-          
-          {recentLogs.length === 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-center text-lg">No logs yet</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center pb-6">
-                <p className="text-muted-foreground mb-4">
-                  {user.role === "student" 
-                    ? "Start tracking your Quran memorization journey by creating your first log." 
-                    : "Your students haven't recorded any logs yet."}
-                </p>
-                {user.role === "student" && (
-                  <Button 
-                    className="bg-primary hover:bg-primary/90"
-                    onClick={handleCreateLog}
-                  >
-                    Create First Log
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">
+                {selectedDate ? `Logs for ${format(selectedDate, "PPP")}` : "Recent Activity"}
+              </h2>
+              <div className="flex gap-2">
+                <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {selectedDate ? format(selectedDate, "MMM dd") : "Pick Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <CalendarComponent
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={handleDateSelect}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                {selectedDate && (
+                  <Button variant="ghost" size="sm" onClick={clearDateFilter}>
+                    Show All
                   </Button>
                 )}
-              </CardContent>
-            </Card>
-          ) : (
-            <div>
-              {recentLogs.map((log) => (
-                <LogEntry 
-                  key={log.id} 
-                  log={log} 
-                  showStudent={showStudentNames}
-                />
-              ))}
-              
-              {logs.length > 5 && (
-                <div className="text-center mt-4">
-                  <Button variant="outline" className="border-primary text-primary hover:bg-primary-light">
-                    View All Logs
-                  </Button>
-                </div>
-              )}
+              </div>
             </div>
-          )}
+            
+            {displayLogs.length === 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-center text-lg">
+                    {selectedDate ? "No logs for this date" : "No logs yet"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-center pb-6">
+                  <p className="text-muted-foreground mb-4">
+                    {selectedDate 
+                      ? "No recitation logs were recorded for this date."
+                      : user.role === "student" 
+                        ? "Start tracking your Quran memorization journey by creating your first log." 
+                        : "Your students haven't recorded any logs yet."}
+                  </p>
+                  {user.role === "student" && (
+                    <Button 
+                      className="bg-primary hover:bg-primary/90"
+                      onClick={handleCreateLog}
+                    >
+                      Create First Log
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <div>
+                {displayLogs.map((log) => (
+                  <LogEntry 
+                    key={log.id} 
+                    log={log} 
+                    showStudent={showStudentNames}
+                  />
+                ))}
+                
+                {!selectedDate && logs.length > 5 && (
+                  <div className="text-center mt-4">
+                    <Button variant="outline" className="border-primary text-primary hover:bg-primary-light">
+                      View All Logs
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </TabsContent>
         
         <TabsContent value="analytics">
@@ -122,6 +170,20 @@ const Dashboard: React.FC<DashboardProps> = ({
           <AnalyticsDashboard logs={logs} />
         </TabsContent>
       </Tabs>
+
+      {/* Floating Action Button for students */}
+      {user.role === "student" && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+          <Button
+            onClick={handleCreateLog}
+            size="lg"
+            className="rounded-full bg-primary hover:bg-primary/90 shadow-lg h-14 px-6"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            New Log
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

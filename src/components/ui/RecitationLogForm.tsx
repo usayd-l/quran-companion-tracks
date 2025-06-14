@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from "react";
-import { RecitationType, MistakePortion, User, MistakeCount } from "@/types";
+import { RecitationType, MistakePortion, User, MistakeCount, Grade } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -53,6 +55,11 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
   const [pageEnd, setPageEnd] = useState<string>("");
   const [testerName, setTesterName] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [grade, setGrade] = useState<Grade | undefined>(undefined);
+  const [needsRepeat, setNeedsRepeat] = useState<boolean>(false);
+  
+  // Mistake tracking states
+  const [includeMistakeTracking, setIncludeMistakeTracking] = useState<boolean>(false);
   const [portionType, setPortionType] = useState<MistakePortion>("Full");
   const [mistakeCounts, setMistakeCounts] = useState<MistakeCount[]>([
     { portion: "Full", mistakes: 0, stucks: 0, markedMistakes: 0 }
@@ -151,9 +158,11 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
         juzNumber: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(juzNumber) : undefined,
         pageStart: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(pageStart) : undefined,
         pageEnd: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(pageEnd) : undefined,
-        mistakeCounts,
+        mistakeCounts: includeMistakeTracking ? mistakeCounts : [],
         testerName,
         notes,
+        grade,
+        needsRepeat,
         createdAt: new Date().toISOString()
       };
       
@@ -438,14 +447,55 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
           {renderRecitationFields()}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Assessment</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="grade">Grade</Label>
+            <Select value={grade} onValueChange={(value) => setGrade(value as Grade)}>
+              <SelectTrigger id="grade">
+                <SelectValue placeholder="Select Grade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Excellent">Excellent</SelectItem>
+                <SelectItem value="Very Good">Very Good</SelectItem>
+                <SelectItem value="Good">Good</SelectItem>
+                <SelectItem value="Average">Average</SelectItem>
+                <SelectItem value="Failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="needsRepeat" 
+              checked={needsRepeat}
+              onCheckedChange={(checked) => setNeedsRepeat(checked as boolean)}
+            />
+            <Label htmlFor="needsRepeat">Needs to repeat</Label>
+          </div>
+        </CardContent>
+      </Card>
       
       <Card>
         <CardHeader>
-          <CardTitle>Mistake Tracking</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <Checkbox 
+              id="includeMistakeTracking" 
+              checked={includeMistakeTracking}
+              onCheckedChange={(checked) => setIncludeMistakeTracking(checked as boolean)}
+            />
+            <Label htmlFor="includeMistakeTracking" className="cursor-pointer">Mistake Tracking</Label>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          {renderMistakeInputs()}
-        </CardContent>
+        {includeMistakeTracking && (
+          <CardContent>
+            {renderMistakeInputs()}
+          </CardContent>
+        )}
       </Card>
       
       <Card>
