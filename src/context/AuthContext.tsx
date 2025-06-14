@@ -12,6 +12,7 @@ interface AuthContextProps {
   loginDemo: (role: 'student' | 'teacher') => void;
   logout: () => void;
   isDemoMode: boolean;
+  isLoggingOut: boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -49,6 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading: true,
   });
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -106,6 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
           setIsDemoMode(false);
         }
+        setIsLoggingOut(false);
       }
     );
 
@@ -178,6 +181,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    setIsLoggingOut(true);
+    
     if (isDemoMode) {
       localStorage.removeItem('demoUser');
       setIsDemoMode(false);
@@ -186,13 +191,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user: null,
         loading: false,
       });
+      setIsLoggingOut(false);
+      window.location.replace('/login');
     } else {
       await supabase.auth.signOut();
+      window.location.replace('/login');
     }
   };
 
   return (
-    <AuthContext.Provider value={{ authState, login, signup, loginDemo, logout, isDemoMode }}>
+    <AuthContext.Provider value={{ authState, login, signup, loginDemo, logout, isDemoMode, isLoggingOut }}>
       {children}
     </AuthContext.Provider>
   );

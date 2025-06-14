@@ -88,23 +88,40 @@ const generateDemoLogs = (): RecitationLog[] => {
   
   const logs: RecitationLog[] = [];
   
-  // Include the current demo student if they exist in localStorage
-  const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+  // Get current demo user from localStorage
+  const currentDemoUser = localStorage.getItem('demoUser');
+  let currentUser = null;
+  if (currentDemoUser) {
+    try {
+      currentUser = JSON.parse(currentDemoUser);
+    } catch (error) {
+      console.error('Error parsing demo user:', error);
+    }
+  }
+  
+  // Include all demo students and ensure current demo student is included
   let allStudents = [...demoStudents];
   
-  // If current user is a demo student, add them to the students list
+  // If current user is a demo student, make sure they're in the list
   if (currentUser && currentUser.role === 'student' && currentUser.id.startsWith('demo-student-')) {
     const existingStudent = allStudents.find(s => s.id === currentUser.id);
     if (!existingStudent) {
-      allStudents.push(currentUser);
+      allStudents.push({
+        id: currentUser.id,
+        name: currentUser.name,
+        role: 'student' as const,
+        email: currentUser.email,
+        profileImage: currentUser.profileImage,
+        classroomId: "demo-classroom-id" // Default classroom for demo student
+      });
     }
   }
   
   // Generate logs for each student with varied performance
   allStudents.forEach((student, studentIndex) => {
-    // Generate more logs for each student (20 instead of 15)
-    for (let i = 0; i < 20; i++) {
-      const daysAgo = Math.floor(Math.random() * 45); // Spread over 45 days
+    // Generate more logs for each student (25 instead of 20)
+    for (let i = 0; i < 25; i++) {
+      const daysAgo = Math.floor(Math.random() * 60); // Spread over 60 days
       const date = new Date();
       date.setDate(date.getDate() - daysAgo);
       
@@ -156,8 +173,11 @@ const generateDemoLogs = (): RecitationLog[] => {
           "Needs more practice with Tajweed",
           "Excellent memorization",
           "Focus on pronunciation",
-          "Keep up the good work"
-        ][Math.floor(Math.random() * 5)] : undefined,
+          "Keep up the good work",
+          "مَا شَاءَ ٱللَّٰهُ - Excellent recitation",
+          "Need to work on fluency",
+          "Great improvement from last session"
+        ][Math.floor(Math.random() * 8)] : undefined,
         grade: grades[gradeIndex],
         needsRepeat: baseMistakes > 5,
         createdAt: date.toISOString(),

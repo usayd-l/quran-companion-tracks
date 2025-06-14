@@ -4,10 +4,10 @@ import { useAuth } from "@/context/AuthContext";
 import UserProfile from "./UserProfile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
 
 const Header = () => {
-  const { authState, isDemoMode, logout } = useAuth();
+  const { authState, isDemoMode, logout, isLoggingOut } = useAuth();
 
   const handleLogout = async () => {
     if (isDemoMode) {
@@ -15,16 +15,10 @@ const Header = () => {
         "Are you sure you want to exit demo mode? All demo records will be deleted."
       );
       if (confirmLogout) {
-        // Clear demo data and logout
-        localStorage.clear();
         await logout();
-        // Force immediate redirect
-        window.location.replace("/login");
       }
     } else {
       await logout();
-      // Force immediate redirect for non-demo mode too
-      window.location.replace("/login");
     }
   };
 
@@ -48,9 +42,14 @@ const Header = () => {
               variant="ghost"
               size="sm"
               onClick={handleLogout}
+              disabled={isLoggingOut}
               className="text-muted-foreground hover:text-destructive"
             >
-              <LogOut className="h-4 w-4" />
+              {isLoggingOut ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <LogOut className="h-4 w-4" />
+              )}
             </Button>
           )}
         </div>
