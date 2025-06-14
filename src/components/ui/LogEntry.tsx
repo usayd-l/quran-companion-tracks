@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { getUserById } from "@/services/localStorage";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Star } from "lucide-react";
 
 interface LogEntryProps {
   log: RecitationLog;
@@ -30,6 +30,18 @@ const LogEntry: React.FC<LogEntryProps> = ({ log, showStudent = false }) => {
   const totalStucks = log.mistakeCounts.reduce((sum, item) => sum + item.stucks, 0);
   const totalMarkedMistakes = log.mistakeCounts.reduce((sum, item) => sum + item.markedMistakes, 0);
 
+  // Get grade color
+  const getGradeColor = (grade?: string) => {
+    switch (grade) {
+      case 'Excellent': return 'bg-green-100 text-green-800 border-green-300';
+      case 'Very Good': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'Good': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'Average': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'Failed': return 'bg-red-100 text-red-800 border-red-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
   return (
     <Link to={`/log/${log.id}`}>
       <Card className="mb-4 cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary">
@@ -52,7 +64,7 @@ const LogEntry: React.FC<LogEntryProps> = ({ log, showStudent = false }) => {
             <p className="text-sm mb-2 font-medium">{student.name}</p>
           )}
           <p className="text-sm">{recitationContent}</p>
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2 mt-2 flex-wrap">
             {totalMistakes > 0 && (
               <Badge variant="secondary" className="text-xs">
                 {totalMistakes} mistakes
@@ -66,6 +78,17 @@ const LogEntry: React.FC<LogEntryProps> = ({ log, showStudent = false }) => {
             {totalMarkedMistakes > 0 && (
               <Badge variant="secondary" className="text-xs">
                 {totalMarkedMistakes} marked
+              </Badge>
+            )}
+            {log.grade && (
+              <Badge variant="outline" className={`text-xs ${getGradeColor(log.grade)}`}>
+                <Star className="h-3 w-3 mr-1" />
+                {log.grade}
+              </Badge>
+            )}
+            {log.needsRepeat && (
+              <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800 border-orange-300">
+                Needs Repeat
               </Badge>
             )}
           </div>

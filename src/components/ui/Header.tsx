@@ -30,14 +30,13 @@ const Header = () => {
             Quran Companion
           </h1>
           {isDemoMode && (
-            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border border-yellow-300">
               Demo Mode
             </Badge>
           )}
         </div>
         
         <div className="flex items-center gap-3">
-          {authState.user && <UserProfile user={authState.user} />}
           {authState.user && (
             <Button
               variant="ghost"

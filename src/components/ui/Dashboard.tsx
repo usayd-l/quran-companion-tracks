@@ -4,10 +4,11 @@ import { User, RecitationLog } from "@/types";
 import { Button } from "@/components/ui/button";
 import LogEntry from "./LogEntry";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, BarChart, Calendar } from "lucide-react";
+import { BarChart, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AnalyticsDashboard from "./analytics/AnalyticsDashboard";
+import FloatingActionButton from "./FloatingActionButton";
 import { getLogs } from "@/services/localStorage";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
@@ -65,7 +66,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-6 relative pb-20">
       <Tabs 
         defaultValue="logs" 
         value={activeTab} 
@@ -73,7 +74,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       >
         <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="logs" className="flex items-center justify-center gap-2">
-            <Plus className="h-4 w-4" />
+            <Calendar className="h-4 w-4" />
             <span>Logs</span>
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center justify-center gap-2">
@@ -129,14 +130,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                         ? "Start tracking your Quran memorization journey by creating your first log." 
                         : "Your students haven't recorded any logs yet."}
                   </p>
-                  {user.role === "student" && (
-                    <Button 
-                      className="bg-primary hover:bg-primary/90"
-                      onClick={handleCreateLog}
-                    >
-                      Create First Log
-                    </Button>
-                  )}
                 </CardContent>
               </Card>
             ) : (
@@ -173,16 +166,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Floating Action Button for students */}
       {user.role === "student" && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-          <Button
-            onClick={handleCreateLog}
-            size="lg"
-            className="rounded-full bg-primary hover:bg-primary/90 shadow-lg h-14 px-6"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            New Log
-          </Button>
-        </div>
+        <FloatingActionButton onClick={handleCreateLog} />
       )}
     </div>
   );
