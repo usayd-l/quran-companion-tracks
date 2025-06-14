@@ -23,6 +23,14 @@ export const demoClassrooms: Classroom[] = [
 // Expanded demo students for the classrooms
 export const demoStudents = [
   {
+    id: "demo-student-id", // Main demo student
+    name: "Demo Student",
+    role: "student" as const,
+    email: "student@demo.com",
+    profileImage: "https://ui-avatars.com/api/?name=Demo+Student&background=E9F0E6&color=4A6741",
+    classroomId: "demo-classroom-id"
+  },
+  {
     id: "demo-student-1",
     name: "Ahmad Ali",
     role: "student" as const,
@@ -88,40 +96,11 @@ const generateDemoLogs = (): RecitationLog[] => {
   
   const logs: RecitationLog[] = [];
   
-  // Get current demo user from localStorage
-  const currentDemoUser = localStorage.getItem('demoUser');
-  let currentUser = null;
-  if (currentDemoUser) {
-    try {
-      currentUser = JSON.parse(currentDemoUser);
-    } catch (error) {
-      console.error('Error parsing demo user:', error);
-    }
-  }
-  
-  // Include all demo students and ensure current demo student is included
-  let allStudents = [...demoStudents];
-  
-  // If current user is a demo student, make sure they're in the list
-  if (currentUser && currentUser.role === 'student' && currentUser.id.startsWith('demo-student-')) {
-    const existingStudent = allStudents.find(s => s.id === currentUser.id);
-    if (!existingStudent) {
-      allStudents.push({
-        id: currentUser.id,
-        name: currentUser.name,
-        role: 'student' as const,
-        email: currentUser.email,
-        profileImage: currentUser.profileImage,
-        classroomId: "demo-classroom-id" // Default classroom for demo student
-      });
-    }
-  }
-  
-  // Generate logs for each student with varied performance
-  allStudents.forEach((student, studentIndex) => {
-    // Generate more logs for each student (25 instead of 20)
-    for (let i = 0; i < 25; i++) {
-      const daysAgo = Math.floor(Math.random() * 60); // Spread over 60 days
+  // Generate logs for ALL demo students including the main demo student
+  demoStudents.forEach((student, studentIndex) => {
+    // Generate 30 logs for each student
+    for (let i = 0; i < 30; i++) {
+      const daysAgo = Math.floor(Math.random() * 90); // Spread over 90 days
       const date = new Date();
       date.setDate(date.getDate() - daysAgo);
       
@@ -232,7 +211,10 @@ export const demoDataService = {
   },
 
   getLogsByUserId: async (userId: string) => {
-    return demoLogs.filter(log => log.userId === userId);
+    console.log('Getting logs for user:', userId);
+    const userLogs = demoLogs.filter(log => log.userId === userId);
+    console.log('Found logs:', userLogs.length);
+    return userLogs;
   },
 
   getLogsByClassroomId: async (classroomId: string) => {

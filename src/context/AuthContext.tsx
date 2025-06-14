@@ -183,20 +183,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     setIsLoggingOut(true);
     
-    if (isDemoMode) {
-      localStorage.removeItem('demoUser');
-      setIsDemoMode(false);
-      setAuthState({
-        isAuthenticated: false,
-        user: null,
-        loading: false,
-      });
-      setIsLoggingOut(false);
-      window.location.replace('/login');
-    } else {
-      await supabase.auth.signOut();
-      window.location.replace('/login');
-    }
+    // Add 10 second delay for loading screen
+    setTimeout(async () => {
+      if (isDemoMode) {
+        localStorage.removeItem('demoUser');
+        setIsDemoMode(false);
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          loading: false,
+        });
+        setIsLoggingOut(false);
+        window.location.replace('/login');
+      } else {
+        await supabase.auth.signOut();
+        window.location.replace('/login');
+      }
+    }, 10000); // 10 seconds delay
   };
 
   return (
