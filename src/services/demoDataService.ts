@@ -1,5 +1,5 @@
 
-import { RecitationLog, Classroom } from "@/types";
+import { RecitationLog, Classroom, Grade } from "@/types";
 
 // Demo classroom for demo teacher
 export const demoClassroom: Classroom = {
@@ -83,7 +83,7 @@ export const demoStudents = [
 // Generate realistic demo logs with varied data
 const generateDemoLogs = (): RecitationLog[] => {
   const surahs = ["Al-Baqarah", "Al-Imran", "An-Nisa", "Al-Maidah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah"];
-  const grades = ["Excellent", "Very Good", "Good", "Average", "Failed"];
+  const grades: Grade[] = ["Excellent", "Very Good", "Good", "Average", "Failed"];
   const recitationTypes = ["Sabaq", "Last 3 Sabaqs", "Sabaq Dhor", "Dhor"];
   
   const logs: RecitationLog[] = [];
@@ -100,24 +100,28 @@ const generateDemoLogs = (): RecitationLog[] => {
       
       // Vary mistake counts based on student performance level
       const performanceLevel = studentIndex % 3; // 0: excellent, 1: good, 2: needs improvement
-      let baseMistakes, baseStucks;
+      let baseMistakes, baseStucks, gradeIndex;
       
       switch (performanceLevel) {
         case 0: // Excellent student
           baseMistakes = Math.floor(Math.random() * 3);
           baseStucks = Math.floor(Math.random() * 2);
+          gradeIndex = Math.floor(Math.random() * 2); // Excellent or Very Good
           break;
         case 1: // Good student
           baseMistakes = Math.floor(Math.random() * 6) + 1;
           baseStucks = Math.floor(Math.random() * 3) + 1;
+          gradeIndex = Math.floor(Math.random() * 3) + 1; // Very Good, Good, or Average
           break;
         case 2: // Needs improvement
           baseMistakes = Math.floor(Math.random() * 10) + 3;
           baseStucks = Math.floor(Math.random() * 5) + 2;
+          gradeIndex = Math.floor(Math.random() * 3) + 2; // Good, Average, or Failed
           break;
         default:
           baseMistakes = 2;
           baseStucks = 1;
+          gradeIndex = 2;
       }
       
       const log: RecitationLog = {
@@ -141,7 +145,7 @@ const generateDemoLogs = (): RecitationLog[] => {
           "Focus on pronunciation",
           "Keep up the good work"
         ][Math.floor(Math.random() * 5)] : undefined,
-        grade: grades[performanceLevel],
+        grade: grades[gradeIndex],
         needsRepeat: baseMistakes > 5,
         createdAt: date.toISOString(),
         userName: student.name

@@ -83,6 +83,10 @@ const Dashboard: React.FC<DashboardProps> = ({
     setSelectedTypes(types);
   };
 
+  const handleDateChange = (date?: Date) => {
+    setSelectedDate(date);
+  };
+
   const handleViewAllLogs = () => {
     navigate("/all-logs");
   };
@@ -141,7 +145,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 
                 <LogsFilter 
                   selectedTypes={selectedTypes}
+                  selectedDate={selectedDate}
                   onFilterChange={handleFilterChange}
+                  onDateChange={handleDateChange}
                 />
               </div>
             </div>
