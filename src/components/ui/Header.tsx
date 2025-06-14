@@ -18,10 +18,13 @@ const Header = () => {
         // Clear demo data and logout
         localStorage.clear();
         await logout();
-        window.location.href = "/login";
+        // Force immediate redirect
+        window.location.replace("/login");
       }
     } else {
       await logout();
+      // Force immediate redirect for non-demo mode too
+      window.location.replace("/login");
     }
   };
 

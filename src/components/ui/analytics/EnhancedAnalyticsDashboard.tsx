@@ -7,7 +7,6 @@ import {
   calculateStreak, 
   getGradeDistribution, 
   getMistakeTrends,
-  getContentPerformance,
   getRecitationTypeStats,
   getWeeklyProgress
 } from "@/services/enhancedAnalyticsService";
@@ -33,7 +32,6 @@ const EnhancedAnalyticsDashboard: React.FC<EnhancedAnalyticsDashboardProps> = ({
   const streakData = calculateStreak(logs);
   const gradeDistribution = getGradeDistribution(logs);
   const mistakeTrends = getMistakeTrends(logs);
-  const contentPerformance = getContentPerformance(logs);
   const typeStats = getRecitationTypeStats(logs);
   const weeklyProgress = getWeeklyProgress(logs);
 
@@ -178,41 +176,6 @@ const EnhancedAnalyticsDashboard: React.FC<EnhancedAnalyticsDashboardProps> = ({
           </div>
         </CardContent>
       </Card>
-
-      {/* Content Performance */}
-      {contentPerformance.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Content Performance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {contentPerformance.slice(0, 5).map((content, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
-                  <div>
-                    <p className="font-medium text-sm">
-                      {content.type === 'surah' ? 'Surah' : 'Juz'} {content.content}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {content.totalSessions} sessions • Avg: {content.averageMistakes} mistakes
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {content.needsImprovement && (
-                      <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800 border-orange-300">
-                        Needs Focus
-                      </Badge>
-                    )}
-                    <Badge variant="outline" className="text-xs">
-                      {content.averageGrade}/5
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

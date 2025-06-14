@@ -88,8 +88,20 @@ const generateDemoLogs = (): RecitationLog[] => {
   
   const logs: RecitationLog[] = [];
   
+  // Include the current demo student if they exist in localStorage
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+  let allStudents = [...demoStudents];
+  
+  // If current user is a demo student, add them to the students list
+  if (currentUser && currentUser.role === 'student' && currentUser.id.startsWith('demo-student-')) {
+    const existingStudent = allStudents.find(s => s.id === currentUser.id);
+    if (!existingStudent) {
+      allStudents.push(currentUser);
+    }
+  }
+  
   // Generate logs for each student with varied performance
-  demoStudents.forEach((student, studentIndex) => {
+  allStudents.forEach((student, studentIndex) => {
     // Generate more logs for each student (20 instead of 15)
     for (let i = 0; i < 20; i++) {
       const daysAgo = Math.floor(Math.random() * 45); // Spread over 45 days

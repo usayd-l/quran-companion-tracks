@@ -45,7 +45,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [logs, setLogs] = useState<RecitationLog[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTypes, setSelectedTypes] = useState<RecitationType[]>([]);
-  const [selectedStudentId, setSelectedStudentId] = useState<string>("all-students");
+  const [selectedStudentId, setSelectedStudentId] = useState<string>("select-students");
   
   // Sort logs by date and creation time (newest first)
   useEffect(() => {
@@ -61,7 +61,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   
   // Filter logs by selected student, date and type
   const filteredLogs = logs.filter(log => {
-    const studentMatch = selectedStudentId === "all-students" ? true : log.userId === selectedStudentId;
+    const studentMatch = selectedStudentId === "select-students" ? true : log.userId === selectedStudentId;
     const dateMatch = selectedDate 
       ? new Date(log.date).toDateString() === selectedDate.toDateString()
       : true;
@@ -71,7 +71,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   });
 
   // Get recent logs (top 5 if no filters applied)
-  const displayLogs = selectedDate || selectedTypes.length > 0 || selectedStudentId !== "all-students"
+  const displayLogs = selectedDate || selectedTypes.length > 0 || selectedStudentId !== "select-students"
     ? filteredLogs 
     : filteredLogs.slice(0, 5);
 
@@ -99,7 +99,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     navigate("/all-logs");
   };
 
-  const hasFilters = selectedDate || selectedTypes.length > 0 || selectedStudentId !== "all-students";
+  const hasFilters = selectedDate || selectedTypes.length > 0 || selectedStudentId !== "select-students";
   const selectedStudent = students.find(s => s.id === selectedStudentId);
 
   return (
@@ -112,7 +112,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <SelectValue placeholder="Select a student to view their data" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all-students">All Students</SelectItem>
+              <SelectItem value="select-students">Select Students</SelectItem>
               {students.map((student) => (
                 <SelectItem key={student.id} value={student.id}>
                   {student.name} ({student.classroomName || "No Classroom"})
@@ -155,12 +155,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                 selectedDate={selectedDate}
                 onFilterChange={handleFilterChange}
                 onDateChange={handleDateChange}
-                showDatePicker={user.role === "student"}
+                showDatePicker={true}
               />
             </div>
             
             {/* Show empty state if teacher hasn't selected a student */}
-            {user.role === "teacher" && selectedStudentId === "all-students" ? (
+            {user.role === "teacher" && selectedStudentId === "select-students" ? (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-center text-lg">Select a Student</CardTitle>
@@ -208,7 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <LogEntry 
                     key={log.id} 
                     log={log} 
-                    showStudent={showStudentNames && selectedStudentId === "all-students"}
+                    showStudent={showStudentNames && selectedStudentId === "select-students"}
                   />
                 ))}
                 
@@ -236,7 +236,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <p className="text-sm text-muted-foreground">Track progress and identify patterns</p>
           </div>
           
-          {user.role === "teacher" && selectedStudentId === "all-students" ? (
+          {user.role === "teacher" && selectedStudentId === "select-students" ? (
             <Card>
               <CardHeader>
                 <CardTitle className="text-center text-lg">Select a Student</CardTitle>
