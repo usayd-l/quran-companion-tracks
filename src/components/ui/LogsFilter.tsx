@@ -2,23 +2,34 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Filter, X } from "lucide-react";
+import { Filter, X, Calendar as CalendarIcon } from "lucide-react";
 import { RecitationType } from "@/types";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface LogsFilterProps {
   selectedTypes: RecitationType[];
+  selectedDate?: Date;
   onFilterChange: (types: RecitationType[]) => void;
+  onDateChange: (date?: Date) => void;
 }
 
 const recitationTypes: RecitationType[] = ['Sabaq', 'Last 3 Sabaqs', 'Sabaq Dhor', 'Dhor'];
 
-const LogsFilter: React.FC<LogsFilterProps> = ({ selectedTypes, onFilterChange }) => {
+const LogsFilter: React.FC<LogsFilterProps> = ({ 
+  selectedTypes, 
+  selectedDate,
+  onFilterChange, 
+  onDateChange 
+}) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDateOpen, setIsDateOpen] = useState(false);
 
   const toggleType = (type: RecitationType) => {
     if (selectedTypes.includes(type)) {
@@ -30,18 +41,19 @@ const LogsFilter: React.FC<LogsFilterProps> = ({ selectedTypes, onFilterChange }
 
   const clearFilters = () => {
     onFilterChange([]);
+    onDateChange(undefined);
   };
 
-  const hasFilters = selectedTypes.length > 0;
+  const hasFilters = selectedTypes.length > 0 || selectedDate;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="relative">
             <Filter className="h-4 w-4 mr-2" />
-            Filter
-            {hasFilters && (
+            Type Filter
+            {selectedTypes.length > 0 && (
               <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
                 {selectedTypes.length}
               </Badge>
@@ -52,14 +64,14 @@ const LogsFilter: React.FC<LogsFilterProps> = ({ selectedTypes, onFilterChange }
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="font-medium text-sm">Filter by Type</h4>
-              {hasFilters && (
+              {selectedTypes.length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={clearFilters}
+                  onClick={() => onFilterChange([])}
                   className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
                 >
-                  Clear all
+                  Clear
                 </Button>
               )}
             </div>
@@ -83,8 +95,47 @@ const LogsFilter: React.FC<LogsFilterProps> = ({ selectedTypes, onFilterChange }
           </div>
         </PopoverContent>
       </Popover>
+
+      <Popover open={isDateOpen} onOpenChange={setIsDateOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn(
+              "justify-start text-left font-normal",
+              !selectedDate && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="h-4 w-4 mr-2" />
+            {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Select Date"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => {
+              onDateChange(date);
+              setIsDateOpen(false);
+            }}
+            initialFocus
+            className="pointer-events-auto"
+          />
+        </PopoverContent>
+      </Popover>
       
       {hasFilters && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearFilters}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          Clear All
+        </Button>
+      )}
+
+      {selectedTypes.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {selectedTypes.map((type) => (
             <Badge
@@ -98,6 +149,17 @@ const LogsFilter: React.FC<LogsFilterProps> = ({ selectedTypes, onFilterChange }
             </Badge>
           ))}
         </div>
+      )}
+
+      {selectedDate && (
+        <Badge
+          variant="secondary"
+          className="text-xs cursor-pointer hover:bg-secondary/80"
+          onClick={() => onDateChange(undefined)}
+        >
+          {format(selectedDate, "MMM d, yyyy")}
+          <X className="h-3 w-3 ml-1" />
+        </Badge>
       )}
     </div>
   );
