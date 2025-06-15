@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { RecitationType, MistakePortion, User, MistakeCount, Grade } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -24,6 +23,7 @@ import { X } from "lucide-react";
 import UserProfile from "@/components/ui/UserProfile";
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from "@/hooks/use-toast";
+import { getAbsenceReasons } from "@/services/supabaseService";
 
 // List of Surahs for the dropdown
 const SURAHS = [
@@ -74,6 +74,10 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
   // Check if current user is a teacher
   const isTeacher = user.role === "teacher";
   
+  const [attendanceStatus, setAttendanceStatus] = useState<"present" | "absent" | "late">("present");
+  const [absenceReason, setAbsenceReason] = useState<string>("");
+  const [absenceReasons, setAbsenceReasons] = useState<{id: number, reason: string}[]>([]);
+
   // Fetch students if the user is a teacher
   useEffect(() => {
     if (isTeacher) {
@@ -90,6 +94,11 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
       }
     }
   }, [isTeacher, user.id, studentId, user.classroomId]);
+
+  useEffect(() => {
+    // Fetch absence reasons once
+    getAbsenceReasons().then(setAbsenceReasons);
+  }, []);
 
   const handlePortionTypeChange = (value: MistakePortion) => {
     setPortionType(value);
@@ -138,6 +147,16 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // New: If absent/late, require reason, skip rest of log form except tester/notes
+    if ((attendanceStatus === "absent" || attendanceStatus === "late") && !absenceReason) {
+      toast({
+        title: "Absence Reason Required",
+        description: "Please select or specify a reason for absence/late.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       console.log("Starting log submission...");
@@ -153,17 +172,18 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
         date,
         recitationType,
         surahName: recitationType === "Sabaq" || recitationType === "Last 3 Sabaqs" ? surahName : undefined,
-        ayahStart: recitationType === "Sabaq" || recitationType === "Last 3 Sabaqs" ? parseInt(ayahStart) : undefined,
-        ayahEnd: recitationType === "Sabaq" || recitationType === "Last 3 Sabaqs" ? parseInt(ayahEnd) : undefined,
+        ayahStart: ["Sabaq", "Last 3 Sabaqs", "Sabaq Dhor", "Dhor"].includes(recitationType) ? parseInt(ayahStart) : undefined,
+        ayahEnd: ["Sabaq", "Last 3 Sabaqs", "Sabaq Dhor", "Dhor"].includes(recitationType) ? parseInt(ayahEnd) : undefined,
         juzNumber: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(juzNumber) : undefined,
-        pageStart: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(pageStart) : undefined,
-        pageEnd: recitationType === "Sabaq Dhor" || recitationType === "Dhor" ? parseInt(pageEnd) : undefined,
-        mistakeCounts: includeMistakeTracking ? mistakeCounts : [],
+        pagesCount: (recitationType === "Sabaq Dhor" || recitationType === "Dhor") && pageStart && pageEnd ? parseInt(pageEnd) - parseInt(pageStart) + 1 : undefined,
+        mistakeCounts: attendanceStatus === "present" && includeMistakeTracking ? mistakeCounts : [],
         testerName,
         notes,
         grade,
         needsRepeat,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        attendanceStatus,
+        absenceReason: (attendanceStatus === "absent" || attendanceStatus === "late") ? absenceReason : undefined,
       };
       
       console.log("Saving log:", newLog);
@@ -364,171 +384,224 @@ const RecitationLogForm: React.FC<RecitationLogFormProps> = ({
     );
   };
 
+  // New: Attendance section at top
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Student Selection for Teachers */}
-      {isTeacher && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Student</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {selectedStudent ? (
-              <div className="relative">
-                <UserProfile user={selectedStudent} />
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="absolute top-2 right-2 h-6 w-6 p-0 rounded-full text-muted-foreground"
-                  onClick={clearSelectedStudent}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+      <Card>
+        <CardHeader>
+          <CardTitle>Attendance</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4 mb-2">
+            <Label>Attendance Status:</Label>
+            <RadioGroup value={attendanceStatus} onValueChange={v => setAttendanceStatus(v as any)} className="flex flex-row gap-2">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="present" id="att-present" />
+                <Label htmlFor="att-present">Present</Label>
               </div>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => setIsStudentDialogOpen(true)}
-              >
-                Select Student
-              </Button>
-            )}
-            
-            <Dialog open={isStudentDialogOpen} onOpenChange={setIsStudentDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Select a Student</DialogTitle>
-                </DialogHeader>
-                
-                <StudentList 
-                  students={students} 
-                  selectable={true}
-                  onSelectStudent={handleSelectStudent}
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="absent" id="att-absent" />
+                <Label htmlFor="att-absent">Absent</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="late" id="att-late" />
+                <Label htmlFor="att-late">Late</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          {(attendanceStatus === "absent" || attendanceStatus === "late") && (
+            <div className="mt-2">
+              <Label htmlFor="absence-reason">Reason for {attendanceStatus === 'absent' ? 'Absence' : 'Being Late'}</Label>
+              <Select value={absenceReason} onValueChange={v => setAbsenceReason(v)}>
+                <SelectTrigger id="absence-reason">
+                  <SelectValue placeholder="Select Reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  {absenceReasons.map(r =>
+                    <SelectItem value={r.reason} key={r.id}>{r.reason}</SelectItem>
+                  )}
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              {absenceReason === "Other" && (
+                <Input
+                  className="mt-1"
+                  placeholder="Specify other reason..."
+                  value={absenceReason === "Other" ? absenceReason : ""}
+                  onChange={e => setAbsenceReason(e.target.value)}
                 />
-              </DialogContent>
-            </Dialog>
-          </CardContent>
-        </Card>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {attendanceStatus === "present" && (
+        <>
+          {/* Student Selection for Teachers */}
+          {isTeacher && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Student</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedStudent ? (
+                  <div className="relative">
+                    <UserProfile user={selectedStudent} />
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="absolute top-2 right-2 h-6 w-6 p-0 rounded-full text-muted-foreground"
+                      onClick={clearSelectedStudent}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setIsStudentDialogOpen(true)}
+                  >
+                    Select Student
+                  </Button>
+                )}
+                
+                <Dialog open={isStudentDialogOpen} onOpenChange={setIsStudentDialogOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Select a Student</DialogTitle>
+                    </DialogHeader>
+                    
+                    <StudentList 
+                      students={students} 
+                      selectable={true}
+                      onSelectStudent={handleSelectStudent}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
+          )}
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="recitationType">Recitation Type</Label>
+                <Select value={recitationType} onValueChange={(value) => setRecitationType(value as RecitationType)}>
+                  <SelectTrigger id="recitationType">
+                    <SelectValue placeholder="Select Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Sabaq">Sabaq</SelectItem>
+                    <SelectItem value="Last 3 Sabaqs">Last 3 Sabaqs</SelectItem>
+                    <SelectItem value="Sabaq Dhor">Sabaq Dhor</SelectItem>
+                    <SelectItem value="Dhor">Dhor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {renderRecitationFields()}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Assessment</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="grade">Grade</Label>
+                <Select value={grade} onValueChange={(value) => setGrade(value as Grade)}>
+                  <SelectTrigger id="grade">
+                    <SelectValue placeholder="Select Grade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Excellent">Excellent</SelectItem>
+                    <SelectItem value="Very Good">Very Good</SelectItem>
+                    <SelectItem value="Good">Good</SelectItem>
+                    <SelectItem value="Average">Average</SelectItem>
+                    <SelectItem value="Failed">Failed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="needsRepeat" 
+                  checked={needsRepeat}
+                  onCheckedChange={(checked) => setNeedsRepeat(checked as boolean)}
+                />
+                <Label htmlFor="needsRepeat">Needs to repeat</Label>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Checkbox 
+                  id="includeMistakeTracking" 
+                  checked={includeMistakeTracking}
+                  onCheckedChange={(checked) => setIncludeMistakeTracking(checked as boolean)}
+                />
+                <Label htmlFor="includeMistakeTracking" className="cursor-pointer">Mistake Tracking</Label>
+              </CardTitle>
+            </CardHeader>
+            {includeMistakeTracking && (
+              <CardContent>
+                {renderMistakeInputs()}
+              </CardContent>
+            )}
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Additional Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="testerName">Tester Name</Label>
+                <Input
+                  id="testerName"
+                  value={testerName}
+                  onChange={(e) => setTesterName(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Any additional notes about this recitation..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </>
       )}
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="date">Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="recitationType">Recitation Type</Label>
-            <Select value={recitationType} onValueChange={(value) => setRecitationType(value as RecitationType)}>
-              <SelectTrigger id="recitationType">
-                <SelectValue placeholder="Select Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Sabaq">Sabaq</SelectItem>
-                <SelectItem value="Last 3 Sabaqs">Last 3 Sabaqs</SelectItem>
-                <SelectItem value="Sabaq Dhor">Sabaq Dhor</SelectItem>
-                <SelectItem value="Dhor">Dhor</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {renderRecitationFields()}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Assessment</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="grade">Grade</Label>
-            <Select value={grade} onValueChange={(value) => setGrade(value as Grade)}>
-              <SelectTrigger id="grade">
-                <SelectValue placeholder="Select Grade" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Excellent">Excellent</SelectItem>
-                <SelectItem value="Very Good">Very Good</SelectItem>
-                <SelectItem value="Good">Good</SelectItem>
-                <SelectItem value="Average">Average</SelectItem>
-                <SelectItem value="Failed">Failed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="needsRepeat" 
-              checked={needsRepeat}
-              onCheckedChange={(checked) => setNeedsRepeat(checked as boolean)}
-            />
-            <Label htmlFor="needsRepeat">Needs to repeat</Label>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Checkbox 
-              id="includeMistakeTracking" 
-              checked={includeMistakeTracking}
-              onCheckedChange={(checked) => setIncludeMistakeTracking(checked as boolean)}
-            />
-            <Label htmlFor="includeMistakeTracking" className="cursor-pointer">Mistake Tracking</Label>
-          </CardTitle>
-        </CardHeader>
-        {includeMistakeTracking && (
-          <CardContent>
-            {renderMistakeInputs()}
-          </CardContent>
-        )}
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Additional Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="testerName">Tester Name</Label>
-            <Input
-              id="testerName"
-              value={testerName}
-              onChange={(e) => setTesterName(e.target.value)}
-              required
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="notes">Notes (Optional)</Label>
-            <Textarea
-              id="notes"
-              placeholder="Any additional notes about this recitation..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
-      
       <div className="flex justify-end space-x-4">
-        <Button 
-          type="button" 
+        <Button
+          type="button"
           variant="outline"
           onClick={() => navigate(-1)}
         >

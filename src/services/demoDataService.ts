@@ -1,4 +1,3 @@
-
 import { RecitationLog, Classroom, Grade } from "@/types";
 
 // Demo classroom for demo teacher
@@ -89,6 +88,26 @@ export const demoStudents = [
 ];
 
 // Generate realistic demo logs with varied data
+export interface RecitationLog {
+  id: string;
+  userId: string;
+  date: string;
+  recitationType: string;
+  surahName?: string;
+  ayahStart?: number;
+  ayahEnd?: number;
+  juzNumber?: number;
+  pagesCount?: number;
+  mistakeCounts: { portion: string; mistakes: number; stucks: number; markedMistakes: number; }[];
+  testerName: string;
+  notes?: string;
+  grade?: string;
+  needsRepeat?: boolean;
+  createdAt: string;
+  userName?: string;
+  attendanceStatus?: string;
+  absenceReason?: string;
+}
 const generateDemoLogs = (): RecitationLog[] => {
   const surahs = ["Al-Baqarah", "Al-Imran", "An-Nisa", "Al-Maidah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah"];
   const grades: Grade[] = ["Excellent", "Very Good", "Good", "Average", "Failed"];
@@ -133,7 +152,7 @@ const generateDemoLogs = (): RecitationLog[] => {
           gradeIndex = 2;
       }
       
-      const log: RecitationLog = {
+      const log: any = {
         id: `demo-log-${student.id}-${i}`,
         userId: student.id,
         date: date.toISOString().split('T')[0],

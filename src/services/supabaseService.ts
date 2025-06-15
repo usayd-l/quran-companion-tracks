@@ -1,10 +1,52 @@
 import { supabase } from "@/integrations/supabase/client";
-import { User, RecitationLog, Classroom } from "@/types";
+import { User, RecitationLog, Classroom, ClassroomConfig, Institution, AbsenceReason } from "@/types";
 import { demoDataService } from "./demoDataService";
 
 // Helper function to check if we're in demo mode
 const isDemoMode = () => {
   return localStorage.getItem('demoUser') !== null;
+};
+
+export const getInstitutionById = async (id: string): Promise<Institution | null> => {
+  if (isDemoMode()) return null;
+  const { data, error } = await supabase.from('institutions').select('*').eq('id', id).single();
+  if (error || !data) return null;
+  return { id: data.id, name: data.name, created_at: data.created_at };
+};
+
+export const getAbsenceReasons = async (): Promise<AbsenceReason[]> => {
+  if (isDemoMode()) {
+    return [
+      { id: 1, reason: "Sick" }, { id: 2, reason: "Vacation" }, { id: 3, reason: "Family Emergency" },
+      { id: 4, reason: "Late Arrival" }, { id: 5, reason: "Transport Issues" },
+      { id: 6, reason: "No Reason" }, { id: 7, reason: "Other" }
+    ];
+  }
+  const { data } = await supabase.from('absence_reasons').select('*');
+  return data ?? [];
+};
+
+export const getClassroomConfig = async (classroomId: string): Promise<ClassroomConfig | null> => {
+  if (isDemoMode()) return null;
+  const { data, error } = await supabase.from('classroom_configs').select('*').eq('classroom_id', classroomId).maybeSingle();
+  if (error || !data) return null;
+  return data as ClassroomConfig;
+};
+
+export const saveClassroomConfig = async (config: Omit<ClassroomConfig, "id" | "created_at">) => {
+  if (isDemoMode()) return true;
+  const { data, error } = await supabase.from('classroom_configs').insert([config]).select().single();
+  if (error) {
+    console.error("Error saving classroom config", error);
+    return null;
+  }
+  return data as ClassroomConfig;
+};
+
+export const updateProfileWithExtras = async (userId: string, payload: Partial<User>) => {
+  if (isDemoMode()) return true;
+  const { error } = await supabase.from("profiles").update(payload).eq("id", userId);
+  return !error;
 };
 
 // User/Profile functions
@@ -33,7 +75,13 @@ export const getUserById = async (userId: string): Promise<User | null> => {
     name: data.name,
     role: data.role,
     profileImage: data.profile_image,
-    email
+    email,
+    age: data.age,
+    parent_email: data.parent_email,
+    enrollment_date: data.enrollment_date,
+    student_identifier: data.student_identifier,
+    classroom_config_id: data.classroom_config_id,
+    institution_id: data.institution_id
   };
 };
 
@@ -49,7 +97,13 @@ export const getUsersByClassroomId = async (classroomId: string): Promise<User[]
         id,
         name,
         role,
-        profile_image
+        profile_image,
+        age,
+        parent_email,
+        enrollment_date,
+        student_identifier,
+        classroom_config_id,
+        institution_id
       )
     `)
     .eq('classroom_id', classroomId);
@@ -65,7 +119,13 @@ export const getUsersByClassroomId = async (classroomId: string): Promise<User[]
     role: item.student.role,
     profileImage: item.student.profile_image,
     classroomId,
-    email: '' // Email not available in this context
+    email: '', // Email not available in this context
+    age: item.student.age,
+    parent_email: item.student.parent_email,
+    enrollment_date: item.student.enrollment_date,
+    student_identifier: item.student.student_identifier,
+    classroom_config_id: item.student.classroom_config_id,
+    institution_id: item.student.institution_id
   }));
 };
 
@@ -89,7 +149,8 @@ export const getClassroomsByTeacherId = async (teacherId: string): Promise<Class
     id: classroom.id,
     name: classroom.name,
     teacherId: classroom.teacher_id,
-    classCode: classroom.class_code
+    classCode: classroom.class_code,
+    institution_id: classroom.institution_id
   }));
 };
 
@@ -116,7 +177,8 @@ export const getClassroomByCode = async (classCode: string): Promise<Classroom |
     id: data.id,
     name: data.name,
     teacherId: data.teacher_id,
-    classCode: data.class_code
+    classCode: data.class_code,
+    institution_id: data.institution_id
   };
 };
 
@@ -134,7 +196,8 @@ export const saveClassroom = async (classroom: Omit<Classroom, 'id'>): Promise<C
     .insert({
       name: classroom.name,
       teacher_id: classroom.teacherId,
-      class_code: classroom.classCode
+      class_code: classroom.classCode,
+      institution_id: classroom.institution_id
     })
     .select()
     .single();
@@ -148,7 +211,8 @@ export const saveClassroom = async (classroom: Omit<Classroom, 'id'>): Promise<C
     id: data.id,
     name: data.name,
     teacherId: data.teacher_id,
-    classCode: data.class_code
+    classCode: data.class_code,
+    institution_id: data.institution_id
   };
 };
 
@@ -212,7 +276,9 @@ export const getLogsByUserId = async (userId: string): Promise<RecitationLog[]> 
       mistakes: mc.mistakes,
       stucks: mc.stucks,
       markedMistakes: mc.marked_mistakes
-    }))
+    })),
+    attendanceStatus: log.attendance_status,
+    absenceReason: log.absence_reason
   }));
 };
 
@@ -273,7 +339,9 @@ export const getLogsByClassroomId = async (classroomId: string): Promise<Recitat
       stucks: mc.stucks,
       markedMistakes: mc.marked_mistakes
     })),
-    userName: log.user?.name
+    userName: log.user?.name,
+    attendanceStatus: log.attendance_status,
+    absenceReason: log.absence_reason
   }));
 };
 
@@ -317,7 +385,9 @@ export const getLogById = async (logId: string): Promise<RecitationLog | null> =
       mistakes: mc.mistakes,
       stucks: mc.stucks,
       markedMistakes: mc.marked_mistakes
-    }))
+    })),
+    attendanceStatus: data.attendance_status,
+    absenceReason: data.absence_reason
   };
 };
 
@@ -326,7 +396,7 @@ export const saveLog = async (log: Omit<RecitationLog, 'id' | 'createdAt'>): Pro
     return await demoDataService.saveLog(log);
   }
 
-  // First, insert the log
+  // New: drop page_start/page_end, support pagesCount, attendance fields, absenceReason
   const { data: logData, error: logError } = await supabase
     .from('recitation_logs')
     .insert({
@@ -337,10 +407,11 @@ export const saveLog = async (log: Omit<RecitationLog, 'id' | 'createdAt'>): Pro
       ayah_start: log.ayahStart,
       ayah_end: log.ayahEnd,
       juz_number: log.juzNumber,
-      page_start: log.pageStart,
-      page_end: log.pageEnd,
+      pages_count: log.pagesCount,
       tester_name: log.testerName,
-      notes: log.notes
+      notes: log.notes,
+      attendance_status: log.attendanceStatus,
+      absence_reason: log.absenceReason
     })
     .select()
     .single();
@@ -384,7 +455,9 @@ export const saveLog = async (log: Omit<RecitationLog, 'id' | 'createdAt'>): Pro
     testerName: logData.tester_name,
     notes: logData.notes,
     createdAt: logData.created_at,
-    mistakeCounts: log.mistakeCounts
+    mistakeCounts: log.mistakeCounts,
+    attendanceStatus: logData.attendance_status,
+    absenceReason: logData.absence_reason
   };
 };
 
@@ -429,7 +502,9 @@ export const getLogsByDate = async (userId: string, date: string): Promise<Recit
       mistakes: mc.mistakes,
       stucks: mc.stucks,
       markedMistakes: mc.marked_mistakes
-    }))
+    })),
+    attendanceStatus: log.attendance_status,
+    absenceReason: log.absence_reason
   }));
 };
 

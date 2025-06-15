@@ -1,4 +1,3 @@
-
 import React from "react";
 import { RecitationLog } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,10 +11,22 @@ import {
 } from "@/services/enhancedAnalyticsService";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Flame, TrendingUp, Target, Calendar, BookOpen, Award } from "lucide-react";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface EnhancedAnalyticsDashboardProps {
   logs: RecitationLog[];
 }
+
+// Helper for tooltips
+const InfoTooltip: React.FC<{ text: string }> = ({ text }) => (
+  <Tooltip>
+    <span className="ml-1 text-muted-foreground cursor-pointer" tabIndex={0}>
+      &#9432;
+      <span className="sr-only">{text}</span>
+    </span>
+    <span className="hidden">{text}</span>
+  </Tooltip>
+);
 
 const EnhancedAnalyticsDashboard: React.FC<EnhancedAnalyticsDashboardProps> = ({ logs }) => {
   if (logs.length === 0) {
@@ -43,7 +54,10 @@ const EnhancedAnalyticsDashboard: React.FC<EnhancedAnalyticsDashboardProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Current Streak</p>
+                <p className="text-sm text-muted-foreground flex items-center">
+                  Current Streak
+                  <InfoTooltip text="Days with at least one present recitation" />
+                </p>
                 <p className="text-2xl font-bold">{streakData.currentStreak}</p>
                 <p className="text-xs text-muted-foreground">days</p>
               </div>
@@ -51,13 +65,17 @@ const EnhancedAnalyticsDashboard: React.FC<EnhancedAnalyticsDashboardProps> = ({
             </div>
           </CardContent>
         </Card>
-        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Sessions</p>
-                <p className="text-2xl font-bold">{logs.length}</p>
+                <p className="text-sm text-muted-foreground flex items-center">
+                  Total Sessions
+                  <InfoTooltip text="Total recitations logged as 'present'. Absences are excluded." />
+                </p>
+                <p className="text-2xl font-bold">
+                  {logs.filter(l => l.attendanceStatus !== 'absent').length}
+                </p>
                 <p className="text-xs text-muted-foreground">logged</p>
               </div>
               <BookOpen className="h-8 w-8 text-blue-500" />
