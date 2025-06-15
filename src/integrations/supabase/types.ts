@@ -9,6 +9,56 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      absence_reasons: {
+        Row: {
+          id: number
+          reason: string | null
+        }
+        Insert: {
+          id?: number
+          reason?: string | null
+        }
+        Update: {
+          id?: number
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      classroom_configs: {
+        Row: {
+          attendance_days: number
+          classroom_id: string | null
+          created_at: string | null
+          id: string
+          program_type: string | null
+          session_type: string
+        }
+        Insert: {
+          attendance_days?: number
+          classroom_id?: string | null
+          created_at?: string | null
+          id?: string
+          program_type?: string | null
+          session_type?: string
+        }
+        Update: {
+          attendance_days?: number
+          classroom_id?: string | null
+          created_at?: string | null
+          id?: string
+          program_type?: string | null
+          session_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classroom_configs_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classroom_members: {
         Row: {
           classroom_id: string
@@ -50,6 +100,7 @@ export type Database = {
           class_code: string
           created_at: string | null
           id: string
+          institution_id: string | null
           name: string
           teacher_id: string
           updated_at: string | null
@@ -58,6 +109,7 @@ export type Database = {
           class_code: string
           created_at?: string | null
           id?: string
+          institution_id?: string | null
           name: string
           teacher_id: string
           updated_at?: string | null
@@ -66,11 +118,19 @@ export type Database = {
           class_code?: string
           created_at?: string | null
           id?: string
+          institution_id?: string | null
           name?: string
           teacher_id?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "classrooms_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "classrooms_teacher_id_fkey"
             columns: ["teacher_id"]
@@ -79,6 +139,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      institutions: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       mistake_counts: {
         Row: {
@@ -117,33 +195,68 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age: number | null
+          classroom_config_id: string | null
           created_at: string | null
+          enrollment_date: string | null
           id: string
+          institution_id: string | null
           name: string
+          parent_email: string | null
           profile_image: string | null
           role: Database["public"]["Enums"]["user_role"]
+          student_identifier: string | null
           updated_at: string | null
         }
         Insert: {
+          age?: number | null
+          classroom_config_id?: string | null
           created_at?: string | null
+          enrollment_date?: string | null
           id: string
+          institution_id?: string | null
           name: string
+          parent_email?: string | null
           profile_image?: string | null
           role: Database["public"]["Enums"]["user_role"]
+          student_identifier?: string | null
           updated_at?: string | null
         }
         Update: {
+          age?: number | null
+          classroom_config_id?: string | null
           created_at?: string | null
+          enrollment_date?: string | null
           id?: string
+          institution_id?: string | null
           name?: string
+          parent_email?: string | null
           profile_image?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          student_identifier?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_classroom_config_id_fkey"
+            columns: ["classroom_config_id"]
+            isOneToOne: false
+            referencedRelation: "classroom_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recitation_logs: {
         Row: {
+          absence_reason: string | null
+          attendance_status: string | null
           ayah_end: number | null
           ayah_start: number | null
           created_at: string | null
@@ -151,8 +264,7 @@ export type Database = {
           id: string
           juz_number: number | null
           notes: string | null
-          page_end: number | null
-          page_start: number | null
+          pages_count: number | null
           recitation_type: Database["public"]["Enums"]["recitation_type"]
           surah_name: string | null
           tester_name: string
@@ -160,6 +272,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          absence_reason?: string | null
+          attendance_status?: string | null
           ayah_end?: number | null
           ayah_start?: number | null
           created_at?: string | null
@@ -167,8 +281,7 @@ export type Database = {
           id?: string
           juz_number?: number | null
           notes?: string | null
-          page_end?: number | null
-          page_start?: number | null
+          pages_count?: number | null
           recitation_type: Database["public"]["Enums"]["recitation_type"]
           surah_name?: string | null
           tester_name: string
@@ -176,6 +289,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          absence_reason?: string | null
+          attendance_status?: string | null
           ayah_end?: number | null
           ayah_start?: number | null
           created_at?: string | null
@@ -183,8 +298,7 @@ export type Database = {
           id?: string
           juz_number?: number | null
           notes?: string | null
-          page_end?: number | null
-          page_start?: number | null
+          pages_count?: number | null
           recitation_type?: Database["public"]["Enums"]["recitation_type"]
           surah_name?: string | null
           tester_name?: string
@@ -211,7 +325,7 @@ export type Database = {
     Enums: {
       mistake_portion: "Full" | "Half" | "Quarter"
       recitation_type: "Sabaq" | "Last 3 Sabaqs" | "Sabaq Dhor" | "Dhor"
-      user_role: "student" | "teacher"
+      user_role: "student" | "teacher" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -329,7 +443,7 @@ export const Constants = {
     Enums: {
       mistake_portion: ["Full", "Half", "Quarter"],
       recitation_type: ["Sabaq", "Last 3 Sabaqs", "Sabaq Dhor", "Dhor"],
-      user_role: ["student", "teacher"],
+      user_role: ["student", "teacher", "super_admin"],
     },
   },
 } as const

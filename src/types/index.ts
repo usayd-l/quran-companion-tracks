@@ -1,4 +1,3 @@
-
 export type UserRole = 'student' | 'teacher' | 'super_admin';
 
 export type RecitationType = 'Sabaq' | 'Last 3 Sabaqs' | 'Sabaq Dhor' | 'Dhor';
@@ -67,7 +66,7 @@ export interface RecitationLog {
   ayahStart?: number;
   ayahEnd?: number;
   juzNumber?: number;
-  pagesCount?: number; // new -- replaces pageStart/pageEnd
+  pagesCount?: number; // replaces pageStart/pageEnd
   mistakeCounts: MistakeCount[];
   testerName: string;
   notes?: string;
@@ -78,11 +77,13 @@ export interface RecitationLog {
   attendanceStatus?: string;  // 'present'/'absent'/'late'
   absenceReason?: string;
 }
+
 export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   loading: boolean;
 }
+
 export interface AnalyticsData {
   attendanceRate?: number;
   consistency?: { date: string; count: number; }[];

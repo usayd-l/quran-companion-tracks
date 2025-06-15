@@ -392,6 +392,7 @@ export const getLogById = async (logId: string): Promise<RecitationLog | null> =
 };
 
 export const saveLog = async (log: Omit<RecitationLog, 'id' | 'createdAt'>): Promise<RecitationLog | null> => {
+  // New: support attendanceStatus, absenceReason, pagesCount
   if (isDemoMode()) {
     return await demoDataService.saveLog(log);
   }
@@ -450,8 +451,7 @@ export const saveLog = async (log: Omit<RecitationLog, 'id' | 'createdAt'>): Pro
     ayahStart: logData.ayah_start,
     ayahEnd: logData.ayah_end,
     juzNumber: logData.juz_number,
-    pageStart: logData.page_start,
-    pageEnd: logData.page_end,
+    pagesCount: logData.pages_count,
     testerName: logData.tester_name,
     notes: logData.notes,
     createdAt: logData.created_at,
