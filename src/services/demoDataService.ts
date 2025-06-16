@@ -1,4 +1,5 @@
-import { RecitationLog, Classroom, Grade } from "@/types";
+
+import { Classroom, Grade } from "@/types";
 
 // Demo classroom for demo teacher
 export const demoClassroom: Classroom = {
@@ -88,32 +89,14 @@ export const demoStudents = [
 ];
 
 // Generate realistic demo logs with varied data
-export interface RecitationLog {
-  id: string;
-  userId: string;
-  date: string;
-  recitationType: string;
-  surahName?: string;
-  ayahStart?: number;
-  ayahEnd?: number;
-  juzNumber?: number;
-  pagesCount?: number;
-  mistakeCounts: { portion: string; mistakes: number; stucks: number; markedMistakes: number; }[];
-  testerName: string;
-  notes?: string;
-  grade?: string;
-  needsRepeat?: boolean;
-  createdAt: string;
-  userName?: string;
-  attendanceStatus?: string;
-  absenceReason?: string;
-}
-const generateDemoLogs = (): RecitationLog[] => {
+const generateDemoLogs = () => {
   const surahs = ["Al-Baqarah", "Al-Imran", "An-Nisa", "Al-Maidah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah"];
   const grades: Grade[] = ["Excellent", "Very Good", "Good", "Average", "Failed"];
   const recitationTypes = ["Sabaq", "Last 3 Sabaqs", "Sabaq Dhor", "Dhor"];
+  const attendanceOptions = ['present', 'absent', 'late'];
+  const absenceReasons = ['Sick', 'Vacation', 'Family Emergency', 'Late Arrival', 'Transport Issues', 'No Reason', 'Other'];
   
-  const logs: RecitationLog[] = [];
+  const logs: any[] = [];
   
   // Generate logs for ALL demo students including the main demo student
   demoStudents.forEach((student, studentIndex) => {
@@ -151,6 +134,12 @@ const generateDemoLogs = (): RecitationLog[] => {
           baseStucks = 1;
           gradeIndex = 2;
       }
+
+      // Determine attendance status
+      const attendanceStatus = attendanceOptions[Math.floor(Math.random() * attendanceOptions.length)];
+      const absenceReason = attendanceStatus === 'absent' || attendanceStatus === 'late' 
+        ? absenceReasons[Math.floor(Math.random() * absenceReasons.length)]
+        : undefined;
       
       const log: any = {
         id: `demo-log-${student.id}-${i}`,
@@ -179,14 +168,15 @@ const generateDemoLogs = (): RecitationLog[] => {
         grade: grades[gradeIndex],
         needsRepeat: baseMistakes > 5,
         createdAt: date.toISOString(),
-        userName: student.name
+        userName: student.name,
+        attendanceStatus,
+        absenceReason
       };
       
       // Add specific content based on recitation type
       if (isJuzBased) {
         log.juzNumber = Math.floor(Math.random() * 30) + 1;
-        log.pageStart = Math.floor(Math.random() * 15) + 1;
-        log.pageEnd = log.pageStart + Math.floor(Math.random() * 5) + 1;
+        log.pagesCount = Math.floor(Math.random() * 15) + 1;
       } else {
         log.surahName = surahs[Math.floor(Math.random() * surahs.length)];
         log.ayahStart = Math.floor(Math.random() * 10) + 1;

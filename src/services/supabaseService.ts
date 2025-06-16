@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { User, RecitationLog, Classroom, ClassroomConfig, Institution, AbsenceReason } from "@/types";
 import { demoDataService } from "./demoDataService";
@@ -266,8 +267,7 @@ export const getLogsByUserId = async (userId: string): Promise<RecitationLog[]> 
     ayahStart: log.ayah_start,
     ayahEnd: log.ayah_end,
     juzNumber: log.juz_number,
-    pageStart: log.page_start,
-    pageEnd: log.page_end,
+    pagesCount: log.pages_count,
     testerName: log.tester_name,
     notes: log.notes,
     createdAt: log.created_at,
@@ -328,8 +328,7 @@ export const getLogsByClassroomId = async (classroomId: string): Promise<Recitat
     ayahStart: log.ayah_start,
     ayahEnd: log.ayah_end,
     juzNumber: log.juz_number,
-    pageStart: log.page_start,
-    pageEnd: log.page_end,
+    pagesCount: log.pages_count,
     testerName: log.tester_name,
     notes: log.notes,
     createdAt: log.created_at,
@@ -375,8 +374,7 @@ export const getLogById = async (logId: string): Promise<RecitationLog | null> =
     ayahStart: data.ayah_start,
     ayahEnd: data.ayah_end,
     juzNumber: data.juz_number,
-    pageStart: data.page_start,
-    pageEnd: data.page_end,
+    pagesCount: data.pages_count,
     testerName: data.tester_name,
     notes: data.notes,
     createdAt: data.created_at,
@@ -492,8 +490,7 @@ export const getLogsByDate = async (userId: string, date: string): Promise<Recit
     ayahStart: log.ayah_start,
     ayahEnd: log.ayah_end,
     juzNumber: log.juz_number,
-    pageStart: log.page_start,
-    pageEnd: log.page_end,
+    pagesCount: log.pages_count,
     testerName: log.tester_name,
     notes: log.notes,
     createdAt: log.created_at,

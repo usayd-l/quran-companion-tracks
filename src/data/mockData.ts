@@ -65,8 +65,7 @@ export const mockLogs: RecitationLog[] = [
     date: "2023-05-06",
     recitationType: "Sabaq Dhor" as RecitationType,
     juzNumber: 1,
-    pageStart: 1,
-    pageEnd: 4,
+    pagesCount: 4,
     mistakeCounts: [
       {
         portion: "Half",
@@ -90,8 +89,7 @@ export const mockLogs: RecitationLog[] = [
     date: "2023-05-07",
     recitationType: "Dhor" as RecitationType,
     juzNumber: 2,
-    pageStart: 21,
-    pageEnd: 25,
+    pagesCount: 5,
     mistakeCounts: [
       {
         portion: "Quarter",

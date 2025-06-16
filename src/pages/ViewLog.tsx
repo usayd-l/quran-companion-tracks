@@ -89,7 +89,7 @@ const ViewLog = () => {
   // Determine what was recited (Surah or Juz)
   const recitationContent = log.surahName 
     ? `${log.surahName} (Ayah ${log.ayahStart} to ${log.ayahEnd})`
-    : `Juz ${log.juzNumber} (Pages ${log.pageStart} to ${log.pageEnd})`;
+    : `Juz ${log.juzNumber}${log.pagesCount ? ` (${log.pagesCount} pages)` : ''}`;
 
   // Get grade color
   const getGradeColor = (grade?: string) => {
@@ -144,6 +144,22 @@ const ViewLog = () => {
             <p className="text-sm text-muted-foreground">Tester</p>
             <p className="font-medium">{log.testerName}</p>
           </div>
+
+          {log.attendanceStatus && (
+            <div>
+              <p className="text-sm text-muted-foreground">Attendance</p>
+              <Badge variant="outline" className={
+                log.attendanceStatus === 'present' ? 'bg-green-100 text-green-800 border-green-300' :
+                log.attendanceStatus === 'late' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                'bg-red-100 text-red-800 border-red-300'
+              }>
+                {log.attendanceStatus.charAt(0).toUpperCase() + log.attendanceStatus.slice(1)}
+              </Badge>
+              {log.absenceReason && (
+                <p className="text-sm text-muted-foreground mt-1">Reason: {log.absenceReason}</p>
+              )}
+            </div>
+          )}
 
           {log.grade && (
             <div>
