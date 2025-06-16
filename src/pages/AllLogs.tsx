@@ -159,7 +159,7 @@ const AllLogs = () => {
             <LogEntry 
               key={log.id} 
               log={log} 
-              showStudent={authState.user?.role === "teacher"}
+              showStudentName={authState.user?.role === "teacher"}
             />
           ))}
         </div>

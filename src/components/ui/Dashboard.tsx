@@ -208,7 +208,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <LogEntry 
                     key={log.id} 
                     log={log} 
-                    showStudent={showStudentNames && selectedStudentId === "select-students"}
+                    showStudentName={showStudentNames && selectedStudentId === "select-students"}
                   />
                 ))}
                 
