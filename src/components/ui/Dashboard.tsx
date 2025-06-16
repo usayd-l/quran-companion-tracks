@@ -8,12 +8,6 @@ import { BarChart, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FloatingActionButton from "./FloatingActionButton";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -24,6 +18,8 @@ import {
 import { format } from "date-fns";
 import LogsFilter from "./LogsFilter";
 import EnhancedAnalyticsDashboard from "./analytics/EnhancedAnalyticsDashboard";
+import DateNavigation from "./DateNavigation";
+import StudentDayCard from "./StudentDayCard";
 
 interface DashboardProps {
   user: User;
@@ -43,7 +39,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"logs" | "analytics">("logs");
   const [logs, setLogs] = useState<RecitationLog[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTypes, setSelectedTypes] = useState<RecitationType[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string>("select-students");
   
@@ -59,39 +55,51 @@ const Dashboard: React.FC<DashboardProps> = ({
     setLogs(sortedLogs);
   }, [initialLogs, refreshTrigger]);
   
-  // Filter logs by selected student, date and type
-  const filteredLogs = logs.filter(log => {
-    const studentMatch = selectedStudentId === "select-students" ? true : log.userId === selectedStudentId;
-    const dateMatch = selectedDate 
-      ? new Date(log.date).toDateString() === selectedDate.toDateString()
-      : true;
-    const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(log.recitationType);
-    
-    return studentMatch && dateMatch && typeMatch;
-  });
+  // Filter logs for teacher view
+  const getFilteredLogsForDate = () => {
+    const selectedDateString = format(selectedDate, "yyyy-MM-dd");
+    return logs.filter(log => log.date === selectedDateString);
+  };
 
-  // Get recent logs (top 5 if no filters applied)
-  const displayLogs = selectedDate || selectedTypes.length > 0 || selectedStudentId !== "select-students"
-    ? filteredLogs 
-    : filteredLogs.slice(0, 5);
+  // Filter logs for student view (existing logic)
+  const getFilteredLogsForStudent = () => {
+    const dateMatch = selectedDate 
+      ? logs.filter(log => new Date(log.date).toDateString() === selectedDate.toDateString())
+      : logs;
+    const typeMatch = selectedTypes.length === 0 
+      ? dateMatch 
+      : dateMatch.filter(log => selectedTypes.includes(log.recitationType));
+    
+    return typeMatch;
+  };
+
+  // Group logs by student for teacher view
+  const getStudentLogsForDate = () => {
+    const dateFilteredLogs = getFilteredLogsForDate();
+    const studentLogsMap = new Map<string, RecitationLog[]>();
+    
+    dateFilteredLogs.forEach(log => {
+      if (!studentLogsMap.has(log.userId)) {
+        studentLogsMap.set(log.userId, []);
+      }
+      studentLogsMap.get(log.userId)!.push(log);
+    });
+    
+    return Array.from(studentLogsMap.entries()).map(([userId, logs]) => {
+      const student = students.find(s => s.id === userId);
+      return { student, logs };
+    }).filter(({ student }) => student);
+  };
 
   const handleCreateLog = () => {
     navigate("/create-log");
-  };
-
-  const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
-  };
-
-  const clearDateFilter = () => {
-    setSelectedDate(undefined);
   };
 
   const handleFilterChange = (types: RecitationType[]) => {
     setSelectedTypes(types);
   };
 
-  const handleDateChange = (date?: Date) => {
+  const handleDateChange = (date: Date) => {
     setSelectedDate(date);
   };
 
@@ -99,30 +107,177 @@ const Dashboard: React.FC<DashboardProps> = ({
     navigate("/all-logs");
   };
 
-  const hasFilters = selectedDate || selectedTypes.length > 0 || selectedStudentId !== "select-students";
-  const selectedStudent = students.find(s => s.id === selectedStudentId);
+  // Render content based on user role and active tab
+  const renderLogsContent = () => {
+    if (user.role === "teacher") {
+      const studentLogsForDate = getStudentLogsForDate();
+      
+      return (
+        <div className="space-y-4">
+          <DateNavigation 
+            selectedDate={selectedDate}
+            onDateChange={handleDateChange}
+          />
+          
+          {studentLogsForDate.length === 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-center text-lg">No Activity Today</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center pb-6">
+                <p className="text-muted-foreground">
+                  No students have recorded any logs for {format(selectedDate, "MMMM d, yyyy")}.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">
+                Student Activity - {format(selectedDate, "MMMM d, yyyy")}
+              </h3>
+              {studentLogsForDate.map(({ student, logs }) => (
+                <StudentDayCard 
+                  key={student!.id}
+                  student={student!}
+                  logs={logs}
+                  selectedDate={selectedDate}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    } else {
+      // Student view (existing logic)
+      const filteredLogs = getFilteredLogsForStudent();
+      const displayLogs = selectedTypes.length > 0 ? filteredLogs : filteredLogs.slice(0, 5);
+      const hasFilters = selectedTypes.length > 0;
+
+      return (
+        <div className="space-y-4">
+          <div className="flex justify-between items-start">
+            <h2 className="text-xl font-semibold">
+              {hasFilters ? "Filtered Logs" : "Recent Activity"}
+            </h2>
+            
+            <LogsFilter 
+              selectedTypes={selectedTypes}
+              selectedDate={undefined}
+              onFilterChange={handleFilterChange}
+              onDateChange={() => {}}
+              showDatePicker={false}
+            />
+          </div>
+          
+          {displayLogs.length === 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-center text-lg">
+                  {hasFilters ? "No logs match your filters" : "No logs yet"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center pb-6">
+                <p className="text-muted-foreground mb-4">
+                  {hasFilters 
+                    ? "Try adjusting your filter criteria to see more logs."
+                    : "Start tracking your Quran memorization journey by creating your first log."}
+                </p>
+                {hasFilters && (
+                  <Button variant="outline" size="sm" onClick={() => setSelectedTypes([])}>
+                    Clear Filters
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <div>
+              {displayLogs.map((log) => (
+                <LogEntry 
+                  key={log.id} 
+                  log={log} 
+                  showStudentName={false}
+                />
+              ))}
+              
+              {!hasFilters && logs.length > 5 && (
+                <div className="text-center mt-4">
+                  <Button 
+                    variant="outline" 
+                    className="border-primary text-primary hover:bg-primary-light"
+                    onClick={handleViewAllLogs}
+                  >
+                    View All Logs ({filteredLogs.length})
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+  };
+
+  const renderAnalyticsContent = () => {
+    if (user.role === "teacher") {
+      return (
+        <div className="space-y-4">
+          <div className="mb-4">
+            <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a student to view their analytics" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="select-students">Select Students</SelectItem>
+                {students.map((student) => (
+                  <SelectItem key={student.id} value={student.id}>
+                    {student.name} ({student.classroomName || "No Classroom"})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedStudentId === "select-students" ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-center text-lg">Select a Student</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center pb-6">
+                <p className="text-muted-foreground">
+                  Please select a student from the dropdown above to view their analytics.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div>
+              <div className="mb-4">
+                <h2 className="text-xl font-semibold">
+                  {students.find(s => s.id === selectedStudentId)?.name}'s Analytics
+                </h2>
+                <p className="text-sm text-muted-foreground">Track progress and identify patterns</p>
+              </div>
+              <EnhancedAnalyticsDashboard 
+                logs={logs.filter(log => log.userId === selectedStudentId)} 
+              />
+            </div>
+          )}
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold">Analytics</h2>
+            <p className="text-sm text-muted-foreground">Track progress and identify patterns</p>
+          </div>
+          <EnhancedAnalyticsDashboard logs={logs} />
+        </div>
+      );
+    }
+  };
 
   return (
     <div className="space-y-6 relative pb-20">
-      {/* Student Selection Dropdown for Teachers */}
-      {user.role === "teacher" && students.length > 0 && (
-        <div className="mb-4">
-          <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a student to view their data" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="select-students">Select Students</SelectItem>
-              {students.map((student) => (
-                <SelectItem key={student.id} value={student.id}>
-                  {student.name} ({student.classroomName || "No Classroom"})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
       <Tabs 
         defaultValue="logs" 
         value={activeTab} 
@@ -140,116 +295,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         </TabsList>
         
         <TabsContent value="logs">
-          <div className="space-y-4">
-            <div className="flex justify-between items-start">
-              <h2 className="text-xl font-semibold">
-                {selectedStudent 
-                  ? `${selectedStudent.name}'s Logs`
-                  : hasFilters 
-                    ? "Filtered Logs" 
-                    : "Recent Activity"}
-              </h2>
-              
-              <LogsFilter 
-                selectedTypes={selectedTypes}
-                selectedDate={selectedDate}
-                onFilterChange={handleFilterChange}
-                onDateChange={handleDateChange}
-                showDatePicker={true}
-              />
-            </div>
-            
-            {/* Show empty state if teacher hasn't selected a student */}
-            {user.role === "teacher" && selectedStudentId === "select-students" ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-center text-lg">Select a Student</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center pb-6">
-                  <p className="text-muted-foreground">
-                    Please select a student from the dropdown above to view their logs and analytics.
-                  </p>
-                </CardContent>
-              </Card>
-            ) : displayLogs.length === 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-center text-lg">
-                    {hasFilters ? "No logs match your filters" : "No logs yet"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-center pb-6">
-                  <p className="text-muted-foreground mb-4">
-                    {hasFilters 
-                      ? "Try adjusting your filter criteria to see more logs."
-                      : user.role === "student" 
-                        ? "Start tracking your Quran memorization journey by creating your first log." 
-                        : "This student hasn't recorded any logs yet."}
-                  </p>
-                  {hasFilters && (
-                    <div className="flex gap-2 justify-center">
-                      {selectedDate && (
-                        <Button variant="outline" size="sm" onClick={clearDateFilter}>
-                          Clear Date
-                        </Button>
-                      )}
-                      {selectedTypes.length > 0 && (
-                        <Button variant="outline" size="sm" onClick={() => setSelectedTypes([])}>
-                          Clear Filters
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <div>
-                {displayLogs.map((log) => (
-                  <LogEntry 
-                    key={log.id} 
-                    log={log} 
-                    showStudentName={showStudentNames && selectedStudentId === "select-students"}
-                  />
-                ))}
-                
-                {!hasFilters && logs.length > 5 && (
-                  <div className="text-center mt-4">
-                    <Button 
-                      variant="outline" 
-                      className="border-primary text-primary hover:bg-primary-light"
-                      onClick={handleViewAllLogs}
-                    >
-                      View All Logs ({filteredLogs.length})
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {renderLogsContent()}
         </TabsContent>
         
         <TabsContent value="analytics">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold">
-              {selectedStudent ? `${selectedStudent.name}'s Analytics` : "Analytics"}
-            </h2>
-            <p className="text-sm text-muted-foreground">Track progress and identify patterns</p>
-          </div>
-          
-          {user.role === "teacher" && selectedStudentId === "select-students" ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-center text-lg">Select a Student</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center pb-6">
-                <p className="text-muted-foreground">
-                  Please select a student from the dropdown above to view their analytics.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <EnhancedAnalyticsDashboard logs={filteredLogs} />
-          )}
+          {renderAnalyticsContent()}
         </TabsContent>
       </Tabs>
 

@@ -1,11 +1,15 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthState, User, UserRole } from '@/types';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { getUserById } from '@/services/supabaseService';
 
 interface AuthContextType {
   authState: AuthState;
+  isDemoMode: boolean;
+  isLoggingOut: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginDemo: (role: 'student' | 'teacher') => Promise<void>;
   signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -18,8 +22,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user: null,
     loading: true,
   });
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
+    // Check for demo mode first
+    const demoUser = localStorage.getItem('demoUser');
+    if (demoUser) {
+      try {
+        const user = JSON.parse(demoUser);
+        setAuthState({
+          isAuthenticated: true,
+          user,
+          loading: false,
+        });
+        setIsDemoMode(true);
+        return;
+      } catch (error) {
+        console.error('Error parsing demo user:', error);
+        localStorage.removeItem('demoUser');
+      }
+    }
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -113,6 +137,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw error;
   };
 
+  const loginDemo = async (role: 'student' | 'teacher') => {
+    const demoUser: User = {
+      id: `demo-${role}-${Date.now()}`,
+      name: role === 'student' ? 'Demo Student' : 'Demo Teacher',
+      email: `demo-${role}@example.com`,
+      role: role,
+      classroomId: role === 'student' ? 'demo-classroom-id' : undefined,
+      profileImage: `https://ui-avatars.com/api/?name=Demo+${role.charAt(0).toUpperCase() + role.slice(1)}`
+    };
+
+    localStorage.setItem('demoUser', JSON.stringify(demoUser));
+    setIsDemoMode(true);
+    setAuthState({
+      isAuthenticated: true,
+      user: demoUser,
+      loading: false,
+    });
+  };
+
   const signup = async (name: string, email: string, password: string, role: UserRole) => {
     const redirectUrl = `${window.location.origin}/`;
     
@@ -132,12 +175,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    setIsLoggingOut(true);
+    
+    if (isDemoMode) {
+      localStorage.removeItem('demoUser');
+      setIsDemoMode(false);
+      setAuthState({
+        isAuthenticated: false,
+        user: null,
+        loading: false,
+      });
+    } else {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    }
+    
+    setIsLoggingOut(false);
   };
 
   return (
-    <AuthContext.Provider value={{ authState, login, signup, logout }}>
+    <AuthContext.Provider value={{ 
+      authState, 
+      isDemoMode, 
+      isLoggingOut, 
+      login, 
+      loginDemo, 
+      signup, 
+      logout 
+    }}>
       {children}
     </AuthContext.Provider>
   );
