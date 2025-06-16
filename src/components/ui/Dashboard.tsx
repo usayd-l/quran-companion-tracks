@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { User, RecitationLog, RecitationType } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -45,6 +44,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   
   // Sort logs by date and creation time (newest first)
   useEffect(() => {
+    console.log('Dashboard: Initial logs received:', initialLogs.length);
     const sortedLogs = [...initialLogs].sort((a, b) => {
       const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
       if (dateComparison === 0) {
@@ -53,12 +53,16 @@ const Dashboard: React.FC<DashboardProps> = ({
       return dateComparison;
     });
     setLogs(sortedLogs);
+    console.log('Dashboard: Sorted logs set:', sortedLogs.length);
   }, [initialLogs, refreshTrigger]);
   
   // Filter logs for teacher view
   const getFilteredLogsForDate = () => {
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
-    return logs.filter(log => log.date === selectedDateString);
+    console.log('Filtering logs for date:', selectedDateString);
+    const filtered = logs.filter(log => log.date === selectedDateString);
+    console.log('Filtered logs for date:', filtered.length);
+    return filtered;
   };
 
   // Filter logs for student view (existing logic)
@@ -76,6 +80,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Group logs by student for teacher view
   const getStudentLogsForDate = () => {
     const dateFilteredLogs = getFilteredLogsForDate();
+    console.log('Date filtered logs:', dateFilteredLogs.length);
     const studentLogsMap = new Map<string, RecitationLog[]>();
     
     dateFilteredLogs.forEach(log => {
@@ -85,10 +90,14 @@ const Dashboard: React.FC<DashboardProps> = ({
       studentLogsMap.get(log.userId)!.push(log);
     });
     
-    return Array.from(studentLogsMap.entries()).map(([userId, logs]) => {
-      const student = students.find(s => s.id === userId);
-      return { student, logs };
-    }).filter(({ student }) => student);
+    // Include all students, even those without logs for the date
+    const result = students.map(student => {
+      const studentLogs = studentLogsMap.get(student.id) || [];
+      return { student, logs: studentLogs };
+    });
+    
+    console.log('Student logs for date:', result.length, 'students');
+    return result;
   };
 
   const handleCreateLog = () => {
@@ -100,6 +109,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleDateChange = (date: Date) => {
+    console.log('Date changed to:', date);
     setSelectedDate(date);
   };
 
@@ -111,6 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const renderLogsContent = () => {
     if (user.role === "teacher") {
       const studentLogsForDate = getStudentLogsForDate();
+      console.log('Rendering teacher view with students:', studentLogsForDate.length);
       
       return (
         <div className="space-y-4">
@@ -122,11 +133,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           {studentLogsForDate.length === 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-center text-lg">No Activity Today</CardTitle>
+                <CardTitle className="text-center text-lg">No Students Found</CardTitle>
               </CardHeader>
               <CardContent className="text-center pb-6">
                 <p className="text-muted-foreground">
-                  No students have recorded any logs for {format(selectedDate, "MMMM d, yyyy")}.
+                  No students are enrolled in your classrooms.
                 </p>
               </CardContent>
             </Card>
@@ -137,8 +148,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               </h3>
               {studentLogsForDate.map(({ student, logs }) => (
                 <StudentDayCard 
-                  key={student!.id}
-                  student={student!}
+                  key={student.id}
+                  student={student}
                   logs={logs}
                   selectedDate={selectedDate}
                 />
