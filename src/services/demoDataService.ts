@@ -12,5 +12,6 @@ export const demoClassroom = {
   classCode: "DEMO123"
 };
 
-// Generate and export demo logs
+// Generate and export demo logs - Import the function first, then call it
+import { generateDemoLogs } from "./demo/demoLogGenerator";
 export const demoLogs = generateDemoLogs();
