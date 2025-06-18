@@ -16,6 +16,7 @@ import {
   getLogsByUserId,
   getLogsByClassroomId
 } from "@/services/supabaseService";
+import FloatingActionButton from "@/components/ui/FloatingActionButton";
 
 const Index = () => {
   const { authState } = useAuth();
@@ -196,6 +197,14 @@ const Index = () => {
         </Tabs>
       ) : (
         <Dashboard user={user} logs={logs} refreshTrigger={refreshTrigger} />
+      )}
+      {/* Floating Action Button for all users */}
+      {user.role === "teacher" ? (
+        selectedClassroomId ? (
+          <FloatingActionButton onClick={() => handleCreateLog(students[0]?.id)} />
+        ) : null
+      ) : (
+        <FloatingActionButton onClick={() => handleCreateLog(user.id)} />
       )}
     </div>
   );

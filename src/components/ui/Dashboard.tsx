@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { User, RecitationLog, RecitationType } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -314,10 +315,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         </TabsContent>
       </Tabs>
 
-      {/* Floating Action Button for students */}
-      {user.role === "student" && (
-        <FloatingActionButton onClick={handleCreateLog} />
-      )}
+      {/* Floating Action Button for all users */}
+      <FloatingActionButton onClick={handleCreateLog} />
     </div>
   );
 };

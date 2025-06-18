@@ -56,11 +56,11 @@ export const generateDemoLogs = (): RecitationLog[] => {
       
       // Only create logs if student is present
       if (attendanceStatus === 'present' || attendanceStatus === 'late') {
-        // Generate 1-3 recitation logs per day for present students
-        const numLogs = Math.floor(Math.random() * 3) + 1;
+        // Generate 1-4 different recitation types per day (max 1 per type)
+        const numTypes = Math.floor(Math.random() * 4) + 1;
+        const selectedTypes = [...recitationTypes].sort(() => 0.5 - Math.random()).slice(0, numTypes);
         
-        for (let logIndex = 0; logIndex < numLogs; logIndex++) {
-          const recitationType = recitationTypes[Math.floor(Math.random() * recitationTypes.length)];
+        selectedTypes.forEach((recitationType, logIndex) => {
           const isJuzBased = recitationType === "Dhor" || recitationType === "Sabaq Dhor";
           
           // Performance-based mistake calculation
@@ -77,13 +77,13 @@ export const generateDemoLogs = (): RecitationLog[] => {
               baseMistakes = Math.floor(Math.random() * 4) + 1; // 1-4 mistakes
               baseStucks = Math.floor(Math.random() * 2); // 0-1 stucks
               gradeIndex = Math.floor(Math.random() * 3) + 1; // Very Good, Good, or Average
-              needsRepeat = baseMistakes > 3;
+              needsRepeat = false;
               break;
             case 2: // Needs improvement
               baseMistakes = Math.floor(Math.random() * 8) + 3; // 3-10 mistakes
               baseStucks = Math.floor(Math.random() * 4) + 1; // 1-4 stucks
               gradeIndex = Math.floor(Math.random() * 3) + 2; // Good, Average, or Failed
-              needsRepeat = baseMistakes > 5;
+              needsRepeat = false;
               break;
             default:
               baseMistakes = 2;
@@ -98,7 +98,11 @@ export const generateDemoLogs = (): RecitationLog[] => {
           else if (totalIssues <= 2) gradeIndex = Math.min(gradeIndex, 1); // Very Good
           else if (totalIssues > 8) gradeIndex = 4; // Failed
           
-          const logId = `demo-log-${student.id}-${date.getTime()}-${logIndex}`;
+          // Only set needsRepeat for Failed or Average grades
+          const finalGrade = grades[gradeIndex];
+          needsRepeat = finalGrade === 'Failed' || finalGrade === 'Average';
+          
+          const logId = `demo-log-${student.id}-${date.getTime()}-${recitationType.replace(/\s+/g, '-')}`;
           
           const log: RecitationLog = {
             id: logId,
@@ -118,7 +122,7 @@ export const generateDemoLogs = (): RecitationLog[] => {
                    totalIssues <= 2 ? "Excellent work, keep it up!" :
                    totalIssues <= 5 ? "Good effort, practice more" :
                    "Needs more practice and review",
-            grade: grades[gradeIndex],
+            grade: finalGrade,
             needsRepeat,
             createdAt: date.toISOString(),
             userName: student.name,
@@ -137,7 +141,7 @@ export const generateDemoLogs = (): RecitationLog[] => {
           }
           
           logs.push(log);
-        }
+        });
       } else {
         // Create attendance-only record for absent students
         const attendanceRecord: RecitationLog = {

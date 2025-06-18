@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 interface StudentDayCardProps {
   student: User;
@@ -20,9 +21,13 @@ const StudentDayCard: React.FC<StudentDayCardProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  // Filter logs for the selected date only
+  const selectedDateString = format(selectedDate, "yyyy-MM-dd");
+  const logsForDate = logs.filter(log => log.date === selectedDateString);
+
   const getAttendanceStatus = () => {
-    if (logs.length === 0) return "absent";
-    const attendanceLog = logs.find(log => log.attendanceStatus);
+    if (logsForDate.length === 0) return "absent";
+    const attendanceLog = logsForDate.find(log => log.attendanceStatus);
     return attendanceLog?.attendanceStatus || "present";
   };
 
@@ -36,7 +41,7 @@ const StudentDayCard: React.FC<StudentDayCardProps> = ({
   };
 
   const getRecitationSummary = () => {
-    const types = [...new Set(logs.map(log => log.recitationType))];
+    const types = [...new Set(logsForDate.map(log => log.recitationType))];
     return types.join(", ") || "No recitation recorded";
   };
 
@@ -68,16 +73,16 @@ const StudentDayCard: React.FC<StudentDayCardProps> = ({
             <p className="text-sm font-medium">{getRecitationSummary()}</p>
           </div>
           
-          {logs.length > 0 && (
+          {logsForDate.length > 0 && (
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <p className="text-muted-foreground">Total Logs:</p>
-                <p className="font-medium">{logs.length}</p>
+                <p className="font-medium">{logsForDate.length}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Pages Read:</p>
                 <p className="font-medium">
-                  {logs.reduce((total, log) => total + (log.pagesCount || 0), 0)}
+                  {logsForDate.reduce((total, log) => total + (log.pagesCount || 0), 0)}
                 </p>
               </div>
             </div>
