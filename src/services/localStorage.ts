@@ -1,214 +1,164 @@
+import { User, Classroom, RecitationLog } from "@/types";
+import { demoTeacher, demoStudents, demoClassrooms, demoLogs } from "./demoDataService";
 
-import { User, RecitationLog, Classroom } from "@/types";
-import { v4 as uuidv4 } from 'uuid';
-
-// Keys for localStorage
-const USERS_KEY = 'quranCompanion_users';
-const LOGS_KEY = 'quranCompanion_logs';
-const CLASSROOMS_KEY = 'quranCompanion_classrooms';
-const CURRENT_USER_KEY = 'quranCompanionUser';
-
-// Demo accounts - removed password field as we now use Supabase auth
-const demoTeacher: User = {
-  id: "teacher1",
-  name: "Demo Teacher",
-  email: "teacher@demo.com",
-  role: "teacher",
-  profileImage: "https://ui-avatars.com/api/?name=Demo+Teacher&background=D3B88C&color=2D2A26"
+const STORAGE_KEYS = {
+  currentUser: "quran_tracker_current_user",
+  users: "quran_tracker_users", 
+  classrooms: "quran_tracker_classrooms",
+  logs: "quran_tracker_logs",
+  isInitialized: "quran_tracker_initialized"
 };
 
-const demoStudent: User = {
-  id: "student1",
-  name: "Demo Student",
-  email: "student@demo.com",
-  role: "student",
-  classroomId: "classroom1",
-  profileImage: "https://ui-avatars.com/api/?name=Demo+Student&background=E9F0E6&color=4A6741"
-};
-
-// Initialize localStorage with demo data if it doesn't exist
 export const initializeLocalStorage = () => {
-  // Initialize users
-  if (!localStorage.getItem(USERS_KEY)) {
-    localStorage.setItem(USERS_KEY, JSON.stringify([
-      demoTeacher,
-      demoStudent,
-      ...mockUsers
-    ]));
-  }
+  console.log('Initializing localStorage with demo data...');
   
-  // Initialize logs
-  if (!localStorage.getItem(LOGS_KEY)) {
-    localStorage.setItem(LOGS_KEY, JSON.stringify(mockLogs));
+  // Check if already initialized to avoid overwriting user data
+  const isInitialized = localStorage.getItem(STORAGE_KEYS.isInitialized);
+  if (isInitialized) {
+    console.log('localStorage already initialized, skipping demo data setup');
+    return;
   }
-  
-  // Initialize classrooms
-  if (!localStorage.getItem(CLASSROOMS_KEY)) {
-    const demoClassroom: Classroom = {
-      id: "classroom1",
-      name: "Demo Quran Class",
-      teacherId: "teacher1",
-      classCode: "DEMO123"
-    };
+
+  try {
+    // Save demo teacher
+    console.log('Saving demo teacher:', demoTeacher);
+    localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(demoTeacher));
     
-    localStorage.setItem(CLASSROOMS_KEY, JSON.stringify([demoClassroom]));
+    // Save all demo users (teacher + students)
+    const allUsers = [demoTeacher, ...demoStudents];
+    console.log('Saving all users:', allUsers.length);
+    localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(allUsers));
     
-    // Update demo student to be part of the classroom
-    const users = getUsers();
-    const updatedUsers = users.map(user => {
-      if (user.id === "student1") {
-        return { ...user, classroomId: "classroom1" };
-      }
-      return user;
-    });
+    // Save demo classrooms
+    console.log('Saving demo classrooms:', demoClassrooms.length);
+    localStorage.setItem(STORAGE_KEYS.classrooms, JSON.stringify(demoClassrooms));
     
-    localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+    // Save demo logs
+    console.log('Saving demo logs:', demoLogs.length);
+    localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(demoLogs));
+    
+    // Mark as initialized
+    localStorage.setItem(STORAGE_KEYS.isInitialized, "true");
+    
+    console.log('Demo data initialization complete!');
+    console.log('Students in classrooms:', demoStudents.map(s => ({ name: s.name, classroomId: s.classroomId })));
+    console.log('Sample logs:', demoLogs.slice(0, 3).map(l => ({ date: l.date, userName: l.userName, userId: l.userId })));
+    
+  } catch (error) {
+    console.error('Error initializing localStorage:', error);
   }
-};
-
-// Import the mock data to initialize
-import { mockUsers, mockLogs } from "@/data/mockData";
-
-// User functions
-export const getUsers = (): User[] => {
-  const users = localStorage.getItem(USERS_KEY);
-  return users ? JSON.parse(users) : [];
-};
-
-export const getUserById = (userId: string): User | undefined => {
-  const users = getUsers();
-  return users.find(user => user.id === userId);
-};
-
-export const getUsersByClassroomId = (classroomId: string): User[] => {
-  const users = getUsers();
-  return users.filter(user => user.classroomId === classroomId && user.role === "student");
-};
-
-export const saveUser = (user: User): User => {
-  const users = getUsers();
-  
-  // Check if user exists
-  const existingUserIndex = users.findIndex(u => u.id === user.id);
-  
-  if (existingUserIndex >= 0) {
-    // Update existing user
-    users[existingUserIndex] = user;
-  } else {
-    // Add new user
-    users.push(user);
-  }
-  
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  return user;
-};
-
-export const findUserByEmail = (email: string): User | undefined => {
-  const users = getUsers();
-  return users.find(user => user.email === email);
-};
-
-// Note: authenticateUser is deprecated since we use Supabase auth
-export const authenticateUser = (email: string, password: string): User | undefined => {
-  const users = getUsers();
-  return users.find(user => user.email === email);
 };
 
 export const getCurrentUser = (): User | null => {
-  const userStr = localStorage.getItem(CURRENT_USER_KEY);
-  if (!userStr) return null;
-  
   try {
-    return JSON.parse(userStr);
+    const userStr = localStorage.getItem(STORAGE_KEYS.currentUser);
+    return userStr ? JSON.parse(userStr) : null;
   } catch (error) {
-    console.error('Failed to parse current user', error);
+    console.error('Error getting current user:', error);
     return null;
   }
 };
 
-export const saveCurrentUser = (user: User | null) => {
-  if (user) {
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(CURRENT_USER_KEY);
-  }
-};
-
-// Log functions
-export const getLogs = (): RecitationLog[] => {
-  const logs = localStorage.getItem(LOGS_KEY);
-  return logs ? JSON.parse(logs) : [];
-};
-
-export const getLogsByUserId = (userId: string): RecitationLog[] => {
-  const logs = getLogs();
-  return logs.filter(log => log.userId === userId);
-};
-
-export const getLogById = (logId: string): RecitationLog | undefined => {
-  const logs = getLogs();
-  return logs.find(log => log.id === logId);
-};
-
-export const saveLog = (log: RecitationLog): RecitationLog => {
-  const logs = getLogs();
-  
-  // Check if log exists
-  const existingLogIndex = logs.findIndex(l => l.id === log.id);
-  
-  if (existingLogIndex >= 0) {
-    // Update existing log
-    logs[existingLogIndex] = log;
-  } else {
-    // Add new log with an ID if it doesn't have one
-    if (!log.id) {
-      log.id = uuidv4();
+export const setCurrentUser = (user: User | null) => {
+  try {
+    if (user) {
+      localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.currentUser);
     }
-    logs.push(log);
+  } catch (error) {
+    console.error('Error setting current user:', error);
   }
-  
-  localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
-  return log;
 };
 
-// Classroom functions
-export const getClassrooms = (): Classroom[] => {
-  const classrooms = localStorage.getItem(CLASSROOMS_KEY);
-  return classrooms ? JSON.parse(classrooms) : [];
+export const getAllUsers = (): User[] => {
+  try {
+    const usersStr = localStorage.getItem(STORAGE_KEYS.users);
+    return usersStr ? JSON.parse(usersStr) : [];
+  } catch (error) {
+    console.error('Error getting users:', error);
+    return [];
+  }
 };
 
-export const getClassroomById = (classroomId: string): Classroom | undefined => {
-  const classrooms = getClassrooms();
-  return classrooms.find(classroom => classroom.id === classroomId);
-};
-
-export const getClassroomsByTeacherId = (teacherId: string): Classroom[] => {
-  const classrooms = getClassrooms();
-  return classrooms.filter(classroom => classroom.teacherId === teacherId);
-};
-
-export const getClassroomByCode = (classCode: string): Classroom | undefined => {
-  const classrooms = getClassrooms();
-  return classrooms.find(classroom => classroom.classCode === classCode);
-};
-
-export const saveClassroom = (classroom: Classroom): Classroom => {
-  const classrooms = getClassrooms();
-  
-  // Check if classroom exists
-  const existingClassroomIndex = classrooms.findIndex(c => c.id === classroom.id);
-  
-  if (existingClassroomIndex >= 0) {
-    // Update existing classroom
-    classrooms[existingClassroomIndex] = classroom;
-  } else {
-    // Add new classroom with an ID if it doesn't have one
-    if (!classroom.id) {
-      classroom.id = uuidv4();
+export const saveUser = (user: User) => {
+  try {
+    const users = getAllUsers();
+    const existingUserIndex = users.findIndex(u => u.id === user.id);
+    
+    if (existingUserIndex >= 0) {
+      users[existingUserIndex] = user;
+    } else {
+      users.push(user);
     }
-    classrooms.push(classroom);
+    
+    localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users));
+  } catch (error) {
+    console.error('Error saving user:', error);
   }
-  
-  localStorage.setItem(CLASSROOMS_KEY, JSON.stringify(classrooms));
-  return classroom;
+};
+
+export const getAllClassrooms = (): Classroom[] => {
+  try {
+    const classroomsStr = localStorage.getItem(STORAGE_KEYS.classrooms);
+    return classroomsStr ? JSON.parse(classroomsStr) : [];
+  } catch (error) {
+    console.error('Error getting classrooms:', error);
+    return [];
+  }
+};
+
+export const saveClassroom = (classroom: Classroom) => {
+  try {
+    const classrooms = getAllClassrooms();
+    const existingClassroomIndex = classrooms.findIndex(c => c.id === classroom.id);
+    
+    if (existingClassroomIndex >= 0) {
+      classrooms[existingClassroomIndex] = classroom;
+    } else {
+      classrooms.push(classroom);
+    }
+    
+    localStorage.setItem(STORAGE_KEYS.classrooms, JSON.stringify(classrooms));
+  } catch (error) {
+    console.error('Error saving classroom:', error);
+  }
+};
+
+export const getAllLogs = (): RecitationLog[] => {
+  try {
+    const logsStr = localStorage.getItem(STORAGE_KEYS.logs);
+    return logsStr ? JSON.parse(logsStr) : [];
+  } catch (error) {
+    console.error('Error getting logs:', error);
+    return [];
+  }
+};
+
+export const saveLog = (log: RecitationLog) => {
+  try {
+    const logs = getAllLogs();
+    const existingLogIndex = logs.findIndex(l => l.id === log.id);
+    
+    if (existingLogIndex >= 0) {
+      logs[existingLogIndex] = log;
+    } else {
+      logs.unshift(log); // Add to beginning for newest first
+    }
+    
+    localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(logs));
+  } catch (error) {
+    console.error('Error saving log:', error);
+  }
+};
+
+export const clearAllData = () => {
+  try {
+    Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+    console.log('All localStorage data cleared');
+  } catch (error) {
+    console.error('Error clearing localStorage:', error);
+  }
 };
