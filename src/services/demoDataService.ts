@@ -1,5 +1,4 @@
 
-
 // Re-export everything from the refactored demo modules
 export { demoTeacher, demoStudents, demoClassrooms } from "./demo/demoUsers";
 export { generateDemoLogs } from "./demo/demoLogGenerator";
@@ -16,4 +15,3 @@ export const demoClassroom = {
 // Generate and export demo logs by importing and calling the function
 import { generateDemoLogs } from "./demo/demoLogGenerator";
 export const demoLogs = generateDemoLogs();
-

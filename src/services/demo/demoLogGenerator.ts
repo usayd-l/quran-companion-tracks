@@ -7,13 +7,42 @@ const grades: Grade[] = ["Excellent", "Very Good", "Good", "Average", "Failed"];
 const recitationTypes: RecitationType[] = ["Sabaq", "Last 3 Sabaqs", "Sabaq Dhor", "Dhor"];
 const absenceReasons = ['Sick', 'Vacation', 'Family Emergency', 'Transport Issues', 'Other'];
 
+// Helper function to check if a date is a weekend (Friday = 5, Saturday = 6)
+const isWeekend = (date: Date): boolean => {
+  const day = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  return day === 5 || day === 6; // Friday or Saturday
+};
+
+// Helper function to get school days (excluding weekends)
+const getSchoolDaysFromToday = (daysBack: number): Date[] => {
+  const schoolDays: Date[] = [];
+  let currentDate = new Date(); // Start from today (June 18th, 2025)
+  let daysProcessed = 0;
+  
+  while (schoolDays.length < daysBack) {
+    if (!isWeekend(currentDate)) {
+      schoolDays.push(new Date(currentDate));
+    }
+    currentDate.setDate(currentDate.getDate() - 1);
+    daysProcessed++;
+    
+    // Safety check to avoid infinite loop
+    if (daysProcessed > 50) break;
+  }
+  
+  return schoolDays.reverse(); // Return in chronological order
+};
+
 export const generateDemoLogs = (): RecitationLog[] => {
+  console.log('Generating demo logs for the last 14 school days...');
   const logs: RecitationLog[] = [];
   
-  // Generate logs for the last 30 days
-  for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
-    const date = new Date();
-    date.setDate(date.getDate() - dayOffset);
+  // Get the last 14 school days (excluding weekends)
+  const schoolDays = getSchoolDaysFromToday(14);
+  console.log('School days generated:', schoolDays.length, schoolDays.map(d => d.toDateString()));
+  
+  schoolDays.forEach((date, dayIndex) => {
+    console.log(`Generating logs for ${date.toDateString()}`);
     
     demoStudents.forEach((student) => {
       const profile = studentPerformanceProfiles[student.id] || { performanceLevel: 1, attendanceRate: 0.8 };
@@ -71,8 +100,10 @@ export const generateDemoLogs = (): RecitationLog[] => {
           else if (totalIssues <= 2) gradeIndex = Math.min(gradeIndex, 1); // Very Good
           else if (totalIssues > 8) gradeIndex = 4; // Failed
           
+          const logId = `demo-log-${student.id}-${date.getTime()}-${logIndex}`;
+          
           const log: RecitationLog = {
-            id: `demo-log-${student.id}-${dayOffset}-${logIndex}`,
+            id: logId,
             userId: student.id,
             date: date.toISOString().split('T')[0],
             recitationType: recitationType,
@@ -112,7 +143,7 @@ export const generateDemoLogs = (): RecitationLog[] => {
       } else {
         // Create attendance-only record for absent students
         const attendanceRecord: RecitationLog = {
-          id: `demo-attendance-${student.id}-${dayOffset}`,
+          id: `demo-attendance-${student.id}-${date.getTime()}`,
           userId: student.id,
           date: date.toISOString().split('T')[0],
           recitationType: "Sabaq", // Placeholder
@@ -127,7 +158,11 @@ export const generateDemoLogs = (): RecitationLog[] => {
         logs.push(attendanceRecord);
       }
     });
-  }
+  });
   
-  return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedLogs = logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  console.log('Generated demo logs:', sortedLogs.length, 'total logs');
+  console.log('Sample log dates:', sortedLogs.slice(0, 5).map(log => log.date));
+  
+  return sortedLogs;
 };
