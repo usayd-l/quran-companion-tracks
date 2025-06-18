@@ -13,28 +13,26 @@ const isWeekend = (date: Date): boolean => {
   return day === 5 || day === 6; // Friday or Saturday
 };
 
-// Helper function to get school days (excluding weekends)
+// Helper function to get school days (excluding weekends) from today going backwards
 const getSchoolDaysFromToday = (daysBack: number): Date[] => {
   const schoolDays: Date[] = [];
-  let currentDate = new Date(); // Start from today (June 18th, 2025)
-  let daysProcessed = 0;
+  let currentDate = new Date(); // Start from today
+  let daysChecked = 0;
   
-  while (schoolDays.length < daysBack) {
+  while (schoolDays.length < daysBack && daysChecked < 100) { // Safety limit
     if (!isWeekend(currentDate)) {
       schoolDays.push(new Date(currentDate));
     }
     currentDate.setDate(currentDate.getDate() - 1);
-    daysProcessed++;
-    
-    // Safety check to avoid infinite loop
-    if (daysProcessed > 50) break;
+    daysChecked++;
   }
   
-  return schoolDays.reverse(); // Return in chronological order
+  return schoolDays.reverse(); // Return in chronological order (oldest first)
 };
 
 export const generateDemoLogs = (): RecitationLog[] => {
-  console.log('Generating demo logs for the last 14 school days...');
+  const today = new Date();
+  console.log('Generating demo logs for the last 14 school days from:', today.toDateString());
   const logs: RecitationLog[] = [];
   
   // Get the last 14 school days (excluding weekends)
@@ -162,7 +160,7 @@ export const generateDemoLogs = (): RecitationLog[] => {
   
   const sortedLogs = logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   console.log('Generated demo logs:', sortedLogs.length, 'total logs');
-  console.log('Sample log dates:', sortedLogs.slice(0, 5).map(log => log.date));
+  console.log('Date range:', sortedLogs[sortedLogs.length - 1]?.date, 'to', sortedLogs[0]?.date);
   
   return sortedLogs;
 };

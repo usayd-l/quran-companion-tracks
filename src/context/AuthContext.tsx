@@ -138,14 +138,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginDemo = async (role: 'student' | 'teacher') => {
-    const demoUser: User = {
-      id: `demo-${role}-${Date.now()}`,
-      name: role === 'student' ? 'Demo Student' : 'Demo Teacher',
-      email: `demo-${role}@example.com`,
-      role: role,
-      classroomId: role === 'student' ? 'demo-classroom-id' : undefined,
-      profileImage: `https://ui-avatars.com/api/?name=Demo+${role.charAt(0).toUpperCase() + role.slice(1)}`
-    };
+    // Use predefined demo user IDs that match our demo data
+    const demoUser: User = role === 'teacher' 
+      ? {
+          id: "demo-teacher-id",
+          name: "Demo Teacher",
+          email: "teacher@demo.com",
+          role: "teacher",
+          profileImage: "https://ui-avatars.com/api/?name=Demo+Teacher&background=D3B88C&color=2D2A26"
+        }
+      : {
+          id: "demo-student-id", 
+          name: "Demo Student",
+          email: "student@demo.com",
+          role: "student",
+          classroomId: "demo-classroom-id",
+          profileImage: "https://ui-avatars.com/api/?name=Demo+Student&background=E9F0E6&color=4A6741"
+        };
 
     localStorage.setItem('demoUser', JSON.stringify(demoUser));
     setIsDemoMode(true);

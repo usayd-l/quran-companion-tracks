@@ -1,5 +1,7 @@
+
 import { User, Classroom, RecitationLog } from "@/types";
-import { demoTeacher, demoStudents, demoClassrooms, demoLogs } from "./demoDataService";
+import { demoTeacher, demoStudents, demoClassrooms } from "./demoDataService";
+import { generateDemoLogs } from "./demo/demoLogGenerator";
 
 const STORAGE_KEYS = {
   currentUser: "quran_tracker_current_user",
@@ -12,7 +14,7 @@ const STORAGE_KEYS = {
 export const initializeLocalStorage = () => {
   console.log('Initializing localStorage with demo data...');
   
-  // Always reinitialize to ensure fresh demo data
+  // Always reinitialize to ensure fresh demo data with current dates
   try {
     // Save demo teacher
     console.log('Saving demo teacher:', demoTeacher);
@@ -27,16 +29,17 @@ export const initializeLocalStorage = () => {
     console.log('Saving demo classrooms:', demoClassrooms.length);
     localStorage.setItem(STORAGE_KEYS.classrooms, JSON.stringify(demoClassrooms));
     
-    // Save demo logs
-    console.log('Saving demo logs:', demoLogs.length);
-    localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(demoLogs));
+    // Generate fresh demo logs for the last 14 days
+    const freshDemoLogs = generateDemoLogs();
+    console.log('Saving fresh demo logs:', freshDemoLogs.length);
+    localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(freshDemoLogs));
     
     // Mark as initialized
     localStorage.setItem(STORAGE_KEYS.isInitialized, "true");
     
     console.log('Demo data initialization complete!');
     console.log('Students in classrooms:', demoStudents.map(s => ({ name: s.name, classroomId: s.classroomId })));
-    console.log('Sample logs:', demoLogs.slice(0, 3).map(l => ({ date: l.date, userName: l.userName, userId: l.userId })));
+    console.log('Sample logs:', freshDemoLogs.slice(0, 3).map(l => ({ date: l.date, userName: l.userName, userId: l.userId })));
     
   } catch (error) {
     console.error('Error initializing localStorage:', error);
