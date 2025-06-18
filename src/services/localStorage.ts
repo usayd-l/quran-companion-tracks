@@ -12,13 +12,7 @@ const STORAGE_KEYS = {
 export const initializeLocalStorage = () => {
   console.log('Initializing localStorage with demo data...');
   
-  // Check if already initialized to avoid overwriting user data
-  const isInitialized = localStorage.getItem(STORAGE_KEYS.isInitialized);
-  if (isInitialized) {
-    console.log('localStorage already initialized, skipping demo data setup');
-    return;
-  }
-
+  // Always reinitialize to ensure fresh demo data
   try {
     // Save demo teacher
     console.log('Saving demo teacher:', demoTeacher);

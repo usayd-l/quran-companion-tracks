@@ -1,3 +1,4 @@
+
 import { User, Classroom, RecitationLog } from "@/types";
 import { demoDataService } from "./demoDataService";
 import { 
@@ -20,7 +21,7 @@ const DEMO_MODE = true;
 export const getUserById = async (userId: string): Promise<User | null> => {
   if (DEMO_MODE) {
     console.log('Demo mode: Getting user by ID:', userId);
-    return demoDataService.getUserById(userId);
+    return getLocalUserById(userId);
   }
   
   // Real Supabase implementation would go here
@@ -30,7 +31,7 @@ export const getUserById = async (userId: string): Promise<User | null> => {
 export const getUsersByClassroomId = async (classroomId: string): Promise<User[]> => {
   if (DEMO_MODE) {
     console.log('Demo mode: Getting users by classroom ID:', classroomId);
-    return demoDataService.getUsersByClassroomId(classroomId);
+    return getLocalUsersByClassroomId(classroomId);
   }
   
   // Real Supabase implementation would go here
@@ -40,7 +41,8 @@ export const getUsersByClassroomId = async (classroomId: string): Promise<User[]
 export const getClassroomsByTeacherId = async (teacherId: string): Promise<Classroom[]> => {
   if (DEMO_MODE) {
     console.log('Demo mode: Getting classrooms by teacher ID:', teacherId);
-    return demoDataService.getClassroomsByTeacherId(teacherId);
+    const classrooms = getAllClassrooms();
+    return classrooms.filter(classroom => classroom.teacherId === teacherId);
   }
   
   // Real Supabase implementation would go here
@@ -50,7 +52,7 @@ export const getClassroomsByTeacherId = async (teacherId: string): Promise<Class
 export const getLogsByUserId = async (userId: string): Promise<RecitationLog[]> => {
   if (DEMO_MODE) {
     console.log('Demo mode: Getting logs for user:', userId);
-    return demoDataService.getLogsByUserId(userId);
+    return getLocalLogsByUserId(userId);
   }
   
   // Real Supabase implementation would go here
@@ -60,7 +62,10 @@ export const getLogsByUserId = async (userId: string): Promise<RecitationLog[]> 
 export const getLogsByClassroomId = async (classroomId: string): Promise<RecitationLog[]> => {
   if (DEMO_MODE) {
     console.log('Demo mode: Getting logs for classroom:', classroomId);
-    return demoDataService.getLogsByClassroomId(classroomId);
+    const allLogs = getAllLogs();
+    const classroomStudents = getLocalUsersByClassroomId(classroomId);
+    const studentIds = classroomStudents.map(student => student.id);
+    return allLogs.filter(log => studentIds.includes(log.userId));
   }
   
   // Real Supabase implementation would go here
@@ -69,7 +74,8 @@ export const getLogsByClassroomId = async (classroomId: string): Promise<Recitat
 
 export const getLogById = async (logId: string): Promise<RecitationLog | null> => {
   if (DEMO_MODE) {
-    return demoDataService.getLogById(logId);
+    const logs = getAllLogs();
+    return logs.find(log => log.id === logId) || null;
   }
   
   // Real Supabase implementation would go here
@@ -79,7 +85,13 @@ export const getLogById = async (logId: string): Promise<RecitationLog | null> =
 export const saveRecitationLog = async (log: any): Promise<RecitationLog> => {
   if (DEMO_MODE) {
     console.log('Demo mode: Saving log:', log);
-    return demoDataService.saveLog(log);
+    const newLog = {
+      ...log,
+      id: `demo-log-${Date.now()}`,
+      createdAt: new Date().toISOString()
+    };
+    saveLog(newLog);
+    return newLog;
   }
   
   // Real Supabase implementation would go here
