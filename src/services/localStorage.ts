@@ -162,3 +162,43 @@ export const clearAllData = () => {
     console.error('Error clearing localStorage:', error);
   }
 };
+
+export const getUserById = (userId: string): User | null => {
+  try {
+    const users = getAllUsers();
+    return users.find(user => user.id === userId) || null;
+  } catch (error) {
+    console.error('Error getting user by ID:', error);
+    return null;
+  }
+};
+
+export const getUsersByClassroomId = (classroomId: string): User[] => {
+  try {
+    const users = getAllUsers();
+    return users.filter(user => user.classroomId === classroomId);
+  } catch (error) {
+    console.error('Error getting users by classroom ID:', error);
+    return [];
+  }
+};
+
+export const getLogsByUserId = (userId: string): RecitationLog[] => {
+  try {
+    const logs = getAllLogs();
+    return logs.filter(log => log.userId === userId);
+  } catch (error) {
+    console.error('Error getting logs by user ID:', error);
+    return [];
+  }
+};
+
+export const getClassroomByCode = (classCode: string): Classroom | null => {
+  try {
+    const classrooms = getAllClassrooms();
+    return classrooms.find(classroom => classroom.classCode === classCode) || null;
+  } catch (error) {
+    console.error('Error getting classroom by code:', error);
+    return null;
+  }
+};

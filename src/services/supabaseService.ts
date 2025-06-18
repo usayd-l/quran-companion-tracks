@@ -7,7 +7,11 @@ import {
   getAllLogs,
   saveUser,
   saveClassroom,
-  saveLog
+  saveLog,
+  getUserById as getLocalUserById,
+  getUsersByClassroomId as getLocalUsersByClassroomId,
+  getLogsByUserId as getLocalLogsByUserId,
+  getClassroomByCode as getLocalClassroomByCode
 } from "./localStorage";
 
 // Demo mode flag - in a real app this would be an environment variable
@@ -76,6 +80,49 @@ export const saveRecitationLog = async (log: any): Promise<RecitationLog> => {
   if (DEMO_MODE) {
     console.log('Demo mode: Saving log:', log);
     return demoDataService.saveLog(log);
+  }
+  
+  // Real Supabase implementation would go here
+  throw new Error("Supabase not configured");
+};
+
+export const getClassroomByCode = async (classCode: string): Promise<Classroom | null> => {
+  if (DEMO_MODE) {
+    console.log('Demo mode: Getting classroom by code:', classCode);
+    return getLocalClassroomByCode(classCode);
+  }
+  
+  // Real Supabase implementation would go here
+  throw new Error("Supabase not configured");
+};
+
+export const joinClassroom = async (userId: string, classroomId: string): Promise<boolean> => {
+  if (DEMO_MODE) {
+    console.log('Demo mode: Joining classroom:', { userId, classroomId });
+    const user = getLocalUserById(userId);
+    if (user) {
+      const updatedUser = { ...user, classroomId };
+      saveUser(updatedUser);
+      return true;
+    }
+    return false;
+  }
+  
+  // Real Supabase implementation would go here
+  throw new Error("Supabase not configured");
+};
+
+export const getAbsenceReasons = async (): Promise<{id: number, reason: string}[]> => {
+  if (DEMO_MODE) {
+    console.log('Demo mode: Getting absence reasons');
+    return [
+      { id: 1, reason: "Sick" },
+      { id: 2, reason: "Family Emergency" },
+      { id: 3, reason: "Doctor Appointment" },
+      { id: 4, reason: "School Event" },
+      { id: 5, reason: "Travel" },
+      { id: 6, reason: "Weather" }
+    ];
   }
   
   // Real Supabase implementation would go here
