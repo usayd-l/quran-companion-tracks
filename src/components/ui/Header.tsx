@@ -1,13 +1,14 @@
 
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
-import UserProfile from "./UserProfile";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LogOut, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const { authState, isDemoMode, logout, isLoggingOut } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     if (isDemoMode) {
@@ -19,6 +20,12 @@ const Header = () => {
       }
     } else {
       await logout();
+    }
+  };
+
+  const handleTeacherClick = () => {
+    if (authState.user?.role === "teacher") {
+      navigate("/teacher-profile");
     }
   };
 
@@ -37,6 +44,15 @@ const Header = () => {
         </div>
         
         <div className="flex items-center gap-3">
+          {authState.user && authState.user.role === "teacher" && (
+            <button
+              onClick={handleTeacherClick}
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              {authState.user.name}
+            </button>
+          )}
+          
           {authState.user && (
             <Button
               variant="ghost"
@@ -56,6 +72,3 @@ const Header = () => {
       </div>
     </header>
   );
-};
-
-export default Header;

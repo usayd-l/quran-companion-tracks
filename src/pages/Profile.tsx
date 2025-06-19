@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { getUserById, getLogsByUserId } from "@/services/supabaseService";
-import UserProfile from "@/components/ui/UserProfile";
 import LogEntry from "@/components/ui/LogEntry";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, User as UserIcon, BarChart } from "lucide-react";
@@ -20,7 +19,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { authState } = useAuth();
-  const [activeTab, setActiveTab] = useState<"profile" | "logs" | "analytics">("profile");
+  const [activeTab, setActiveTab] = useState<"logs" | "analytics">("logs");
   const [user, setUser] = useState<User | null>(null);
   const [logs, setLogs] = useState<RecitationLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,18 +84,21 @@ const Profile = () => {
   
   const isCurrentUser = authState.user && user && user.id === authState.user.id;
   const isTeacher = authState.user && authState.user.role === "teacher";
-  const isTeacherOfUser = user && authState.user && user.classroomId === authState.user.classroomId;
   
   const handleCreateLog = () => {
-    if (isTeacherOfUser) {
-      navigate(`/create-log/${user.id}`);
-    } else {
-      navigate("/create-log");
-    }
+    navigate(`/create-log/${user.id}`);
   };
 
   const handleViewAllLogs = () => {
     navigate("/all-logs", { state: { userId: user.id } });
+  };
+
+  const handleStudentProfileClick = () => {
+    navigate(`/student-profile/${user.id}`);
+  };
+
+  const handleLogClick = (log: RecitationLog) => {
+    navigate(`/log/${log.id}`);
   };
   
   return (
@@ -112,21 +114,24 @@ const Profile = () => {
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-xl font-bold">
-          {selectedDate ? `${user.name} - ${format(selectedDate, "MMM d, yyyy")}` : user.name}
-        </h1>
+        <div className="flex-1">
+          <button
+            onClick={handleStudentProfileClick}
+            className="text-left hover:text-primary transition-colors"
+          >
+            <h1 className="text-xl font-bold">
+              {selectedDate ? `${user.name} - ${format(selectedDate, "MMM d, yyyy")}` : user.name}
+            </h1>
+          </button>
+        </div>
       </div>
       
       <Tabs 
-        defaultValue="profile" 
+        defaultValue="logs" 
         value={activeTab} 
-        onValueChange={(value) => setActiveTab(value as "profile" | "logs" | "analytics")}
+        onValueChange={(value) => setActiveTab(value as "logs" | "analytics")}
       >
-        <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="profile" className="flex items-center justify-center gap-2">
-            <UserIcon className="h-4 w-4" />
-            <span>Profile</span>
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger value="logs" className="flex items-center justify-center gap-2">
             <ChevronLeft className="h-4 w-4" />
             <span>Logs</span>
@@ -136,45 +141,6 @@ const Profile = () => {
             <span>Analytics</span>
           </TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Student Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <UserProfile user={user} showRole={true} />
-              
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="font-medium">{user.email}</p>
-                </div>
-                
-                {user.role === "student" && (
-                  <>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Student ID</p>
-                      <p className="font-medium">{user.id}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-muted-foreground">Classroom</p>
-                      <p className="font-medium">{user.classroomName || "Not assigned"}</p>
-                    </div>
-                  </>
-                )}
-              </div>
-              
-              {/* Space for future fields */}
-              <div className="pt-4 border-t">
-                <p className="text-sm text-muted-foreground italic">
-                  Additional profile information will be added here in future updates.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
         
         <TabsContent value="logs">
           <div className="flex justify-between items-center mb-4">
@@ -209,7 +175,11 @@ const Profile = () => {
           ) : (
             <div className="space-y-4">
               {recentLogs.map(log => (
-                <LogEntry key={log.id} log={log} />
+                <LogEntry 
+                  key={log.id} 
+                  log={log} 
+                  onClick={() => handleLogClick(log)}
+                />
               ))}
               
               {selectedDate && (
@@ -238,7 +208,7 @@ const Profile = () => {
       </Tabs>
 
       {/* Floating Action Button */}
-      {(isCurrentUser || isTeacherOfUser) && (
+      {(isCurrentUser || isTeacher) && (
         <FloatingActionButton onClick={handleCreateLog} />
       )}
     </div>

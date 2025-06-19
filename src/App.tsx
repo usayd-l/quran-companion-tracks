@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +11,8 @@ import CreateLog from "./pages/CreateLog";
 import ViewLog from "./pages/ViewLog";
 import AllLogs from "./pages/AllLogs";
 import Profile from "./pages/Profile";
+import StudentProfile from "./pages/StudentProfile";
+import TeacherProfile from "./pages/TeacherProfile";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -65,6 +66,8 @@ const AppRoutes = () => {
       <Route path="/all-logs" element={<ProtectedRoute><AllLogs /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/student-profile/:userId" element={<ProtectedRoute><StudentProfile /></ProtectedRoute>} />
+      <Route path="/teacher-profile" element={<ProtectedRoute><TeacherProfile /></ProtectedRoute>} />
       
       {/* 404 route */}
       <Route path="*" element={<NotFound />} />
