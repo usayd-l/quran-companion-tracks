@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { User } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getUserById } from "@/services/supabaseService";
+import { useNavigate } from "react-router-dom";
 
 interface UserProfileProps {
   user: User;
@@ -11,6 +13,7 @@ interface UserProfileProps {
 
 const UserProfile: React.FC<UserProfileProps> = ({ user, showRole = true }) => {
   const [profileData, setProfileData] = useState<User>(user);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -31,9 +34,18 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, showRole = true }) => {
     }
   }, [user.id]);
 
+  const handleClick = () => {
+    if (user.role === "teacher") {
+      navigate("/teacher-profile");
+    }
+  };
+
   return (
     <Card className="overflow-hidden border-none shadow-md mb-4">
-      <CardContent className="p-4">
+      <CardContent 
+        className={`p-4 ${user.role === "teacher" ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""}`}
+        onClick={handleClick}
+      >
         <div className="flex items-center space-x-4">
           <Avatar className="h-12 w-12 border-2 border-primary">
             <AvatarImage src={profileData.profileImage} alt={profileData.name} />
