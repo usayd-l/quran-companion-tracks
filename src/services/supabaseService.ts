@@ -1,4 +1,5 @@
 
+import { supabase } from "@/integrations/supabase/client";
 import { User, Classroom, RecitationLog } from "@/types";
 import { demoDataService } from "./demoDataService";
 import { 
@@ -24,8 +25,30 @@ export const getUserById = async (userId: string): Promise<User | null> => {
     return getLocalUserById(userId);
   }
   
-  // Real Supabase implementation would go here
-  throw new Error("Supabase not configured");
+  // Real Supabase implementation
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .maybeSingle();
+    
+  if (error) {
+    console.error('Error fetching user:', error);
+    return null;
+  }
+  
+  return data ? {
+    id: data.id,
+    name: data.name,
+    role: data.role,
+    profileImage: data.profile_image,
+    age: data.age,
+    enrollmentDate: data.enrollment_date,
+    parentEmail: data.parent_email,
+    studentIdentifier: data.student_identifier,
+    classroomId: data.classroom_config_id,
+    institutionId: data.institution_id
+  } as User : null;
 };
 
 export const getUsersByClassroomId = async (classroomId: string): Promise<User[]> => {
