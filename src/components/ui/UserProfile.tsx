@@ -34,18 +34,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, showRole = true }) => {
     }
   }, [user.id]);
 
-  const handleClick = () => {
-    if (user.role === "teacher") {
-      navigate("/teacher-profile");
-    }
-  };
-
   return (
     <Card className="overflow-hidden border-none shadow-md mb-4">
-      <CardContent 
-        className={`p-4 ${user.role === "teacher" ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""}`}
-        onClick={handleClick}
-      >
+      <CardContent className="p-4">
         <div className="flex items-center space-x-4">
           <Avatar className="h-12 w-12 border-2 border-primary">
             <AvatarImage src={profileData.profileImage} alt={profileData.name} />

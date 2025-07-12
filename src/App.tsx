@@ -9,6 +9,7 @@ import AuthLoadingScreen from "./components/ui/AuthLoadingScreen";
 import Index from "./pages/Index";
 import CreateLog from "./pages/CreateLog";
 import ViewLog from "./pages/ViewLog";
+import LogDetails from "./pages/LogDetails";
 import AllLogs from "./pages/AllLogs";
 import Profile from "./pages/Profile";
 import StudentProfile from "./pages/StudentProfile";
@@ -63,6 +64,7 @@ const AppRoutes = () => {
       <Route path="/create-log" element={<ProtectedRoute><CreateLog /></ProtectedRoute>} />
       <Route path="/create-log/:studentId" element={<ProtectedRoute><CreateLog /></ProtectedRoute>} />
       <Route path="/log/:logId" element={<ProtectedRoute><ViewLog /></ProtectedRoute>} />
+      <Route path="/log-details/:logId" element={<ProtectedRoute><LogDetails /></ProtectedRoute>} />
       <Route path="/all-logs" element={<ProtectedRoute><AllLogs /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
